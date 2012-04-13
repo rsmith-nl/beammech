@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright © 2012 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Time-stamp: <2012-04-13 18:33:01 rsmith>
+# Time-stamp: <2012-04-13 23:23:27 rsmith>
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -28,6 +28,70 @@
 
 import math
 
+class Load(object):
+    '''Point load.'''
+    def __init__(size, pos):
+        '''Create a point load.
+        - size: force in Newtons
+        - pos: distance of the force from the origin in mm.
+        '''
+        assert pos >= 0, 'Positions must be positive.'
+        self.magnitude = size
+        self.ap = pos
+
+    def moment(self, pos):
+        '''Calculate the bending moment the force exerts at pos.'''
+        assert pos >= 0
+        return (pos-self.center)*self.magnitude
+
+    def at(self, pos):
+        '''Returns the contribution to the shear load at pos.'''
+        assert pos >= 0
+        if pos < self.ap:
+            return 0.0
+        return self.ap
+
+class DistLoad(Load):
+    '''Evenly distributed load.'''
+    def __init__(self, size, pos)
+        assert pos[0] >= 0 and pos[1] >= 0 
+        self.start = min(pos)
+        self.end = max(pos)
+        Load.init(size, (start+end)/2)
+
+    def moment(self, pos):
+        assert pos >= 0
+        if pos <= self.start or pos >= self.end:
+            return Load.moment(pos)
+        left = float(pos-self.start)
+        right = float(pos-self.end)
+        length = float(end-start)
+        return (left**2-right**2)*self.magnitude/(2*length)
+
+    def at(self, pos):
+        assert pos >= 0
+        if pos <= self.start:
+            return 0.0
+        if pos >= self.end:
+            return self.ap
+        pass
+
+
+def shearforce(length, loads, supports):
+    '''Calculates a list of shear forces based on a list of loads. The
+    returned list has a resolution of 1 mm per list unit. The shear force at
+    index p exists over the domain from p to p+1.
+
+    - length: length of the product in millimeters.
+    - loads: list of Loads.
+    - supports: a 2-tuple of the location in mm of the supports.'''
+    assert length > 0, 'Beam of negative length is impossible.'
+    assert len(loads) > 0, 'No loads specified'
+    assert len(supports) == 2, 'There must be two supports.'
+    assert -1<supports[0]<=length
+    assert -1<supports[1]<=length
+    pass
+
 def pointload(length, loadspec, supports):
     '''Calculates a list of shear forces based on a single point load. The
     list has a resolution of 1 mm per list unit. The shear force at index p 
@@ -36,6 +100,7 @@ def pointload(length, loadspec, supports):
     - length: length of the product in millimeters.
     - loadspec: a 2-tuple (location [mm], magnitude [N]) of the pointload.
     - supports: a 2-tuple of the location in mm of the supports.'''
+    assert length > 0, 'Beam of negative length is impossible.'
     assert len(loadspec) == 2, 'Loadspec must be a 2-tuple (location, magnitude)'
     assert len(supports) == 2, 'There must be two supports.'
     assert -1<supports[0]<=length, 'The first support lies outside the beam.'
@@ -56,6 +121,7 @@ def pointload(length, loadspec, supports):
 
 def integrate(src):
     '''Integrates a list of values. No integration constants!'''
+    assert len(src) > 0
     rv = [0.0]
     for i in range(len(src)-1):
         rv.append(rv[-1]+src[i])
@@ -63,6 +129,7 @@ def integrate(src):
 
 def align(src, supports):
     '''Transform a list of values such that the value at the supports is zero.'''
+    assert len(src) > 0
     assert len(supports) == 2, 'There must be two supports!'
     assert -1<supports[0]<=len(src), 'The first support lies outside the beam.'
     assert -1<supports[1]<=len(src), 'The second support lies outside the beam.'
@@ -89,6 +156,9 @@ def loadcase(D, E, xsecprops, supports):
     - supports: A list of positions of the two supports
     Returns a tuple of three lists containing the deflection, 
     maximum tensile stress and maximum compression stress.'''
+    assert len(supports) == 2, 'There must be two supports!'
+    assert -1<supports[0]<=len(D), 'The first support lies outside the beam.'
+    assert -1<supports[1]<=len(D), 'The second support lies outside the beam.'
     M = integrate(D)
     xvals = range(len(D))
     I, GA, etop, ebot = zip(*map(xsecprops, xvals))
