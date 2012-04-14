@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright © 2012 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Time-stamp: <2012-04-13 23:23:27 rsmith>
+# Time-stamp: <2012-04-14 21:40:03 rsmith>
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -30,52 +30,63 @@ import math
 
 class Load(object):
     '''Point load.'''
-    def __init__(size, pos):
+    def __init__(self, size, pos):
         '''Create a point load.
         - size: force in Newtons
-        - pos: distance of the force from the origin in mm.
-        '''
+        - pos: distance of the force from the origin in mm.'''
         assert pos >= 0, 'Positions must be positive.'
-        self.magnitude = size
-        self.ap = pos
+        self.size = float(size)
+        self.pos = pos
+
+    def __str__(self):
+        return "point load of {} N @ {} mm.".format(self.size, self.pos)
 
     def moment(self, pos):
         '''Calculate the bending moment the force exerts at pos.'''
         assert pos >= 0
-        return (pos-self.center)*self.magnitude
+        return (self.pos-pos)*self.size
 
-    def at(self, pos):
+    def shear(self, pos):
         '''Returns the contribution to the shear load at pos.'''
         assert pos >= 0
-        if pos < self.ap:
+        if pos < self.pos:
             return 0.0
-        return self.ap
+        return self.size
 
 class DistLoad(Load):
     '''Evenly distributed load.'''
-    def __init__(self, size, pos)
+    def __init__(self, size, pos):
         assert pos[0] >= 0 and pos[1] >= 0 
-        self.start = min(pos)
-        self.end = max(pos)
-        Load.init(size, (start+end)/2)
+        self.start = int(min(pos))
+        self.end = int(max(pos))
+        Load.__init__(self, size, float(self.start+self.end)/2)
+
+    def __str__(self):
+        rs = "distributed load of {} N @ {}--{} mm."
+        return rs.format(self.size, self.start, self.end)
 
     def moment(self, pos):
         assert pos >= 0
         if pos <= self.start or pos >= self.end:
-            return Load.moment(pos)
+            return Load.moment(self, pos)
         left = float(pos-self.start)
-        right = float(pos-self.end)
-        length = float(end-start)
-        return (left**2-right**2)*self.magnitude/(2*length)
+        right = float(self.end-pos)
+        length = float(self.end-self.start)
+        return (left**2-right**2)*self.size/(2*length)
 
-    def at(self, pos):
+    def shear(self, pos):
         assert pos >= 0
         if pos <= self.start:
             return 0.0
         if pos >= self.end:
-            return self.ap
-        pass
+            return self.size
+        extent = float(self.end - self.start)
+        offs = float(pos - self.start)
+        return self.size*offs/extent
 
+def kg(v):
+    '''Converts kilograms to Newtons.'''
+    return float(v)*9.81
 
 def shearforce(length, loads, supports):
     '''Calculates a list of shear forces based on a list of loads. The
@@ -84,40 +95,38 @@ def shearforce(length, loads, supports):
 
     - length: length of the product in millimeters.
     - loads: list of Loads.
-    - supports: a 2-tuple of the location in mm of the supports.'''
+    - supports: a 2-tuple of the location in mm of the supports.
+    
+    Returns a 3-tuple consisting of a list of shear values, 
+    reaction Load R1 and reaction Load R2.
+    '''
+    length = int(length)
     assert length > 0, 'Beam of negative length is impossible.'
     assert len(loads) > 0, 'No loads specified'
+    for ld in loads:
+        assert ld.pos >= 0 and ld.pos <= length, 'Load outside length'
     assert len(supports) == 2, 'There must be two supports.'
-    assert -1<supports[0]<=length
-    assert -1<supports[1]<=length
-    pass
-
-def pointload(length, loadspec, supports):
-    '''Calculates a list of shear forces based on a single point load. The
-    list has a resolution of 1 mm per list unit. The shear force at index p 
-    exists over the domain from p to p+1.
-
-    - length: length of the product in millimeters.
-    - loadspec: a 2-tuple (location [mm], magnitude [N]) of the pointload.
-    - supports: a 2-tuple of the location in mm of the supports.'''
-    assert length > 0, 'Beam of negative length is impossible.'
-    assert len(loadspec) == 2, 'Loadspec must be a 2-tuple (location, magnitude)'
-    assert len(supports) == 2, 'There must be two supports.'
-    assert -1<supports[0]<=length, 'The first support lies outside the beam.'
-    assert -1<supports[1]<=length, 'The second support lies outside the beam'
-    R3 = -math.fabs(loadspec[1])
+    assert 0 <= supports[0] <= length
+    assert 0 <= supports[1] <= length
     s1 = min(supports) # Reaction force R1 applies here.
     s2 = max(supports) # Reaction force R2 applies here.
-    s3 = loadspec[0]
-    rv = [0.0 for index in range(0,length+1)]
-    R2 = -R3*float(s3-s1)/float(s2-s1)
-    R1 = -R3-R2
-    if s2 > s3:
-        R3,R2 = R2,R3
-        s3,s2 = s2,s3
-    rv[s1:s2] = [R1]*(s2-s1)
-    rv[s2:s3] = [R1+R2]*(s3-s2)
-    return rv
+    # Moment balance around s1
+    moments = sum([ld.moment(s1) for ld in loads])
+    #print [ld.moment(s1) for ld in loads]
+    #print moments
+    R2 = Load(-moments/(s2-s1), s2)
+    loads.append(R2)
+    # Force equilibrium
+    R1 = Load(-sum([ld.size for ld in loads]), s1)
+    loads.append(R1)
+    xvals = range(length)
+    contribs = []
+    for ld in loads:
+        contribs.append(map(ld.shear, xvals))
+    print contribs
+    rv =  map(sum, zip(*contribs))
+    rv.append(0.0)
+    return (rv, R1, R2)
 
 def integrate(src):
     '''Integrates a list of values. No integration constants!'''
@@ -152,7 +161,7 @@ def loadcase(D, E, xsecprops, supports):
     The I is the second area moment of the homogenized cross-section in mm⁴. 
     GA is the shear stiffness in N. The e* values are the distance from the 
     neutral line of the cross-section to the top and bottom of the material 
-    respectively. 
+    in mm respectively. 
     - supports: A list of positions of the two supports
     Returns a tuple of three lists containing the deflection, 
     maximum tensile stress and maximum compression stress.'''
@@ -174,4 +183,17 @@ def loadcase(D, E, xsecprops, supports):
 
 # Tests
 if __name__ == '__main__':
-    pass
+    PL1 = Load(-1, 9)
+    print PL1
+    DL1 = DistLoad(-5, [3, 8])
+    print DL1
+    print 'should be 0:', DL1.moment(5.5)
+    print 'should be negative:', DL1.moment(3)
+    print 'should be positive:', DL1.moment(8)
+    D, P, Q = shearforce(10, [PL1, DL1], [0,5])
+    print "Sum of forces:", PL1.size + DL1.size + P.size + Q.size
+    print 'Sum of moments:', (PL1.moment(0) + DL1.moment(0) + 
+                              P.moment(0) + Q.moment(0))
+    print P
+    print Q
+    print D
