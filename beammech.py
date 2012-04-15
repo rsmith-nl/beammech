@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright © 2012 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Time-stamp: <2012-04-15 14:57:26 rsmith>
+# Time-stamp: <2012-04-15 18:19:58 rsmith>
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -62,8 +62,8 @@ class DistLoad(Load):
         Load.__init__(self, size, float(self.start+self.end)/2)
 
     def __str__(self):
-        rs = "distributed load of {} N @ {}--{} mm."
-        return rs.format(self.size, self.start, self.end)
+        r = "distributed load of {} N @ {}--{} mm."
+        return r.format(self.size, self.start, self.end)
 
     def moment(self, pos):
         assert pos >= 0
@@ -124,7 +124,7 @@ def shearforce(length, loads, supports):
     xvals = range(length)
     contribs = []
     for ld in loads:
-        contribs.append(map(ld.shear, xvals))
+        contribs.append([ld.shear(x) for x in xvals])
     rv =  map(sum, zip(*contribs))
     rv.append(0.0)
     return (rv, R1, R2)
@@ -144,12 +144,13 @@ def _supcheck(src, spts):
         rv = [spts[0].pos, spts[1].pos]
     else:
         rv = [int(spts[0]), int(spts[1])]
-    assert -1<rv[0]<=len(src), 'The first support lies outside the beam.'
-    assert -1<rv[1]<=len(src), 'The second support lies outside the beam.'
+    assert 0 <= rv[0] <= len(src), 'The first support lies outside the beam.'
+    assert 0 <= rv[1] <= len(src), 'The second support lies outside the beam.'
     return rv
 
 def _align(src, supports):
-    '''Transform a list of values such that the value at the supports is zero.'''
+    '''Transform a list of values such that the value at the supports is 
+    zero.'''
     assert len(src) > 0
     supports = _supcheck(src, supports)
     anchor = supports[0]
@@ -178,13 +179,13 @@ def loadcase(D, E, xsecprops, supports):
     supports = _supcheck(D, supports)
     M = _integrate(D)
     xvals = range(len(D))
-    I, GA, etop, ebot = zip(*map(xsecprops, xvals))
-    top = map(lambda x: -M[x]*etop[x]/I[x], xvals)
-    bottom = map(lambda x: -M[x]*ebot[x]/I[x], xvals)
-    ddy_b = map(lambda i: M[i]/(E*I[i]), xvals)
+    I, GA, etop, ebot = zip(*[xsecprops(x) for x in xvals])
+    top = [-M[x]*etop[x]/I[x] for x in xvals]
+    bottom = [-M[x]*ebot[x]/I[x] for x in xvals]
+    ddy_b = [M[x]/(E*I[x]) for x in xvals]
     dy_b = _integrate(ddy_b)
-    dy_sh = map(lambda i: -1.5*D[i]/GA[i], xvals)
-    dy_tot = map(lambda x,y: x+y, dy_b, dy_sh)
+    dy_sh = [-1.5*D[x]/GA[x] for x in xvals]
+    dy_tot = [i+j for i, j in zip(dy_b, dy_sh)]
     y_tot = _integrate(dy_tot)
     y_tot = _align(y_tot, supports)
     return (y_tot, top, bottom)
@@ -200,14 +201,14 @@ if __name__ == '__main__':
     print 'should be negative:', DL1.moment(3)
     print 'should be positive:', DL1.moment(8)
     print 'Test shearforce()'
-    D, P, Q = shearforce(100, PL1, [0,100])
+    Dx, P, Q = shearforce(100, PL1, [0, 100])
     print 'Reaction: ', P
     print 'Reaction: ', Q
-    print D
+    print Dx
     print 'test loadcase()'
     def xsec_test(x):
         return (100, 1e12, 5, -10)
-    y,t,b = loadcase(D, 70, xsec_test, [P.pos, Q.pos])
+    y, t, b = loadcase(Dx, 70, xsec_test, [P.pos, Q.pos])
     print 'Calculated maximum deflection: {:.2f}'.format(y[50])
     print 'Theoretical: {:.2f}'.format(-1.0*100.0**3/(48*70*100.0))
     rs = 'Calculated stresses at x=50: top {} MPa, bottom {} MPa'
