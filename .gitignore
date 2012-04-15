@@ -1,0 +1,5 @@
+tests/*.d
+tests/beammech.py
+*.pyc
+*.pyo
+

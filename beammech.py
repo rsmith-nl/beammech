@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright © 2012 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Time-stamp: <2012-04-15 11:38:08 rsmith>
+# Time-stamp: <2012-04-15 14:57:26 rsmith>
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -84,9 +84,9 @@ class DistLoad(Load):
         offs = float(pos - self.start)
         return self.size*offs/extent
 
-def kg(v):
+def kg2N(k):
     '''Converts kilograms to Newtons.'''
-    return float(v)*9.81
+    return float(k)*9.81
 
 def shearforce(length, loads, supports):
     '''Calculates a list of shear forces based on a list of loads. The
@@ -142,7 +142,7 @@ def _supcheck(src, spts):
     assert len(spts) == 2, 'There must be two supports!'
     if isinstance(spts[0], Load):
         rv = [spts[0].pos, spts[1].pos]
-    elif
+    else:
         rv = [int(spts[0]), int(spts[1])]
     assert -1<rv[0]<=len(src), 'The first support lies outside the beam.'
     assert -1<rv[1]<=len(src), 'The second support lies outside the beam.'
@@ -174,20 +174,20 @@ def loadcase(D, E, xsecprops, supports):
     in mm respectively. 
     - supports: A list of positions of the two supports
     Returns a tuple of three lists containing the deflection, 
-    maximum tensile stress and maximum compression stress.'''
+    stress at the top and stress at the bottom of the cross-section.'''
     supports = _supcheck(D, supports)
     M = _integrate(D)
     xvals = range(len(D))
     I, GA, etop, ebot = zip(*map(xsecprops, xvals))
-    tension = map(lambda x: M[x]*etop[x]/I[x], xvals)
-    compression = map(lambda x: M[x]*ebot[x]/I[x], xvals)
+    top = map(lambda x: -M[x]*etop[x]/I[x], xvals)
+    bottom = map(lambda x: -M[x]*ebot[x]/I[x], xvals)
     ddy_b = map(lambda i: M[i]/(E*I[i]), xvals)
     dy_b = _integrate(ddy_b)
     dy_sh = map(lambda i: -1.5*D[i]/GA[i], xvals)
     dy_tot = map(lambda x,y: x+y, dy_b, dy_sh)
     y_tot = _integrate(dy_tot)
     y_tot = _align(y_tot, supports)
-    return (y_tot, tension, compression)
+    return (y_tot, top, bottom)
 
 # Tests
 if __name__ == '__main__':
@@ -207,8 +207,8 @@ if __name__ == '__main__':
     print 'test loadcase()'
     def xsec_test(x):
         return (100, 1e12, 5, -10)
-    y,t,c = loadcase(D, 70, xsec_test, [P.pos, Q.pos])
+    y,t,b = loadcase(D, 70, xsec_test, [P.pos, Q.pos])
     print 'Calculated maximum deflection: {:.2f}'.format(y[50])
     print 'Theoretical: {:.2f}'.format(-1.0*100.0**3/(48*70*100.0))
-    rs = 'Calculated stresses at x=50: tenstion {} MPa, compression {} MPa'
-    print rs.format(t[50], c[50])
+    rs = 'Calculated stresses at x=50: top {} MPa, bottom {} MPa'
+    print rs.format(t[50], b[50])
