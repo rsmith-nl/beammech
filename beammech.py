@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright © 2012 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Time-stamp: <2012-04-14 21:40:03 rsmith>
+# Time-stamp: <2012-04-15 11:38:08 rsmith>
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -102,9 +102,13 @@ def shearforce(length, loads, supports):
     '''
     length = int(length)
     assert length > 0, 'Beam of negative length is impossible.'
-    assert len(loads) > 0, 'No loads specified'
-    for ld in loads:
-        assert ld.pos >= 0 and ld.pos <= length, 'Load outside length'
+    if isinstance(loads, list):
+        assert len(loads) > 0, 'No loads specified'
+        for ld in loads:
+            assert ld.pos >= 0 and ld.pos <= length, 'Load outside length'
+    else:
+        assert isinstance(loads, Load)
+        loads = [loads]
     assert len(supports) == 2, 'There must be two supports.'
     assert 0 <= supports[0] <= length
     assert 0 <= supports[1] <= length
@@ -112,8 +116,6 @@ def shearforce(length, loads, supports):
     s2 = max(supports) # Reaction force R2 applies here.
     # Moment balance around s1
     moments = sum([ld.moment(s1) for ld in loads])
-    #print [ld.moment(s1) for ld in loads]
-    #print moments
     R2 = Load(-moments/(s2-s1), s2)
     loads.append(R2)
     # Force equilibrium
@@ -123,12 +125,11 @@ def shearforce(length, loads, supports):
     contribs = []
     for ld in loads:
         contribs.append(map(ld.shear, xvals))
-    print contribs
     rv =  map(sum, zip(*contribs))
     rv.append(0.0)
     return (rv, R1, R2)
 
-def integrate(src):
+def _integrate(src):
     '''Integrates a list of values. No integration constants!'''
     assert len(src) > 0
     rv = [0.0]
@@ -136,12 +137,21 @@ def integrate(src):
         rv.append(rv[-1]+src[i])
     return rv
 
-def align(src, supports):
+def _supcheck(src, spts):
+    '''Check the supports argument.'''
+    assert len(spts) == 2, 'There must be two supports!'
+    if isinstance(spts[0], Load):
+        rv = [spts[0].pos, spts[1].pos]
+    elif
+        rv = [int(spts[0]), int(spts[1])]
+    assert -1<rv[0]<=len(src), 'The first support lies outside the beam.'
+    assert -1<rv[1]<=len(src), 'The second support lies outside the beam.'
+    return rv
+
+def _align(src, supports):
     '''Transform a list of values such that the value at the supports is zero.'''
     assert len(src) > 0
-    assert len(supports) == 2, 'There must be two supports!'
-    assert -1<supports[0]<=len(src), 'The first support lies outside the beam.'
-    assert -1<supports[1]<=len(src), 'The second support lies outside the beam.'
+    supports = _supcheck(src, supports)
     anchor = supports[0]
     # First, translate the whole list so that the value at the 
     # index anchor is zero.
@@ -165,35 +175,40 @@ def loadcase(D, E, xsecprops, supports):
     - supports: A list of positions of the two supports
     Returns a tuple of three lists containing the deflection, 
     maximum tensile stress and maximum compression stress.'''
-    assert len(supports) == 2, 'There must be two supports!'
-    assert -1<supports[0]<=len(D), 'The first support lies outside the beam.'
-    assert -1<supports[1]<=len(D), 'The second support lies outside the beam.'
-    M = integrate(D)
+    supports = _supcheck(D, supports)
+    M = _integrate(D)
     xvals = range(len(D))
     I, GA, etop, ebot = zip(*map(xsecprops, xvals))
-    tension = map(lambda x: -M[x]*etop[x]/I[x], xwaardes)
-    compression = map(lambda x: -M[x]*ebot[x]/I[x], xwaardes)
-    ddy_b = map(lambda i: -M[i]/(E*I[i]), xvals)
-    dy_b = integrate(ddy_b)
-    dy_sh = map(lambda i: 1.5*D[i]/GA[i], xvals)
+    tension = map(lambda x: M[x]*etop[x]/I[x], xvals)
+    compression = map(lambda x: M[x]*ebot[x]/I[x], xvals)
+    ddy_b = map(lambda i: M[i]/(E*I[i]), xvals)
+    dy_b = _integrate(ddy_b)
+    dy_sh = map(lambda i: -1.5*D[i]/GA[i], xvals)
     dy_tot = map(lambda x,y: x+y, dy_b, dy_sh)
-    y_tot = integrate(dy_tot)
-    y_tot = align(y_tot, supports)
+    y_tot = _integrate(dy_tot)
+    y_tot = _align(y_tot, supports)
     return (y_tot, tension, compression)
 
 # Tests
 if __name__ == '__main__':
-    PL1 = Load(-1, 9)
+    print 'Test Loads'
+    PL1 = Load(-1, 50)
     print PL1
     DL1 = DistLoad(-5, [3, 8])
     print DL1
     print 'should be 0:', DL1.moment(5.5)
     print 'should be negative:', DL1.moment(3)
     print 'should be positive:', DL1.moment(8)
-    D, P, Q = shearforce(10, [PL1, DL1], [0,5])
-    print "Sum of forces:", PL1.size + DL1.size + P.size + Q.size
-    print 'Sum of moments:', (PL1.moment(0) + DL1.moment(0) + 
-                              P.moment(0) + Q.moment(0))
-    print P
-    print Q
+    print 'Test shearforce()'
+    D, P, Q = shearforce(100, PL1, [0,100])
+    print 'Reaction: ', P
+    print 'Reaction: ', Q
     print D
+    print 'test loadcase()'
+    def xsec_test(x):
+        return (100, 1e12, 5, -10)
+    y,t,c = loadcase(D, 70, xsec_test, [P.pos, Q.pos])
+    print 'Calculated maximum deflection: {:.2f}'.format(y[50])
+    print 'Theoretical: {:.2f}'.format(-1.0*100.0**3/(48*70*100.0))
+    rs = 'Calculated stresses at x=50: tenstion {} MPa, compression {} MPa'
+    print rs.format(t[50], c[50])
