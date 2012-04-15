@@ -2,4 +2,7 @@ tests/*.d
 tests/beammech.py
 *.pyc
 *.pyo
-
+beammech.py
+setup.py
+tools/replace.sed
+backup-*

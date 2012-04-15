@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright © 2012 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Time-stamp: <2012-04-15 18:19:58 rsmith>
+# Time-stamp: <2012-04-15 20:40:06 rsmith>
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -27,6 +27,8 @@
 "Module for simple stiffness and strength calculations of beams."
 
 import math
+
+__version__ = 'UkZTVkVS'
 
 class Load(object):
     '''Point load.'''
