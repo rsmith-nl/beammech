@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright © 2012 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Time-stamp: <2012-04-15 20:40:06 rsmith>
+# Time-stamp: <2012-04-27 16:28:54 rsmith>
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -165,7 +165,7 @@ def _align(src, supports):
     rv = [translated[i]-delta*(i-anchor) for i in range(len(src))]
     return rv
 
-def loadcase(D, E, xsecprops, supports):
+def loadcase(D, E, xsecprops, supports, shear=True):
     '''Calculates a loadcase.
     - D: list of shear force values along the length of the beam.
     - E: Young's Modulus of the homogenized beam,
@@ -177,7 +177,8 @@ def loadcase(D, E, xsecprops, supports):
     in mm respectively. 
     - supports: A list of positions of the two supports
     Returns a tuple of three lists containing the deflection, 
-    stress at the top and stress at the bottom of the cross-section.'''
+    stress at the top and stress at the bottom of the cross-section.
+    -shear: Indicates wether shear deflection should be taken into account. True by default.'''
     supports = _supcheck(D, supports)
     M = _integrate(D)
     xvals = range(len(D))
@@ -186,8 +187,11 @@ def loadcase(D, E, xsecprops, supports):
     bottom = [-M[x]*ebot[x]/I[x] for x in xvals]
     ddy_b = [M[x]/(E*I[x]) for x in xvals]
     dy_b = _integrate(ddy_b)
-    dy_sh = [-1.5*D[x]/GA[x] for x in xvals]
-    dy_tot = [i+j for i, j in zip(dy_b, dy_sh)]
+    if shear:
+        dy_sh = [-1.5*D[x]/GA[x] for x in xvals]
+        dy_tot = [i+j for i, j in zip(dy_b, dy_sh)]
+    else:
+        dy_tot = dy_b
     y_tot = _integrate(dy_tot)
     y_tot = _align(y_tot, supports)
     return (y_tot, top, bottom)
