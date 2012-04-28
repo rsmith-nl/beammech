@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright © 2012 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Time-stamp: <2012-04-15 17:27:27 rsmith>
+# Time-stamp: <2012-04-28 20:20:12 rsmith>
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -47,7 +47,7 @@ def belastingsgeval1():
     oplegpunten = (32, 1652)
     P = beammech.Load(-1000, 2522)
     D, Ra, Rb =  beammech.shearforce(2930, P, oplegpunten)
-    y, t, c = beammech.loadcase(D, 70000.0, xsecprops_AD5, oplegpunten)
+    M, y, t, c = beammech.loadcase(D, 70000.0, xsecprops_AD5, oplegpunten)
     rs = 'Belastingsgeval 1, {}\n({} mm van einde profiel.)'
     print rs.format(P, 2522-1620-32)
     print 'Berekende verplaatsing {:.1f} mm,'.format(y[2522])
@@ -64,7 +64,7 @@ def belastingsgeval2():
     oplegpunten = (32, 1652)
     P = beammech.Load(P, 2522)
     D, Ra, Rb =  beammech.shearforce(2930, P, oplegpunten)
-    y, t, b = beammech.loadcase(D, 70000.0, xsecprops_AD5, oplegpunten)
+    M, y, t, b = beammech.loadcase(D, 70000.0, xsecprops_AD5, oplegpunten)
     of = open('AD5-2.d', 'w')
     of.write('# Spanningen bij P = {} N.\n'.format(P))
     for x,F in enumerate(D):
@@ -91,7 +91,7 @@ def belastingsgeval3():
     for F in range(-10000, -30000, -10):
         P = beammech.Load(F, pos)
         D, Ra, Rb =  beammech.shearforce(2930, P, oplegpunten)
-        y, t, b = beammech.loadcase(D, 70000.0, xsecprops_AD5, oplegpunten)
+        M, y, t, b = beammech.loadcase(D, 70000.0, xsecprops_AD5, oplegpunten)
         elastische_energie = 0.5*P.size*y[pos]
         impact = T*(-150+y[pos])
         if elastische_energie >= impact:

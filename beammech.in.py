@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright © 2012 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Time-stamp: <2012-04-27 16:28:54 rsmith>
+# Time-stamp: <2012-04-28 20:25:21 rsmith>
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -44,12 +44,12 @@ class Load(object):
         return "point load of {} N @ {} mm.".format(self.size, self.pos)
 
     def moment(self, pos):
-        '''Calculate the bending moment the force exerts at pos.'''
+        '''Calculate the bending moment the load exerts at pos.'''
         assert pos >= 0
         return (self.pos-pos)*self.size
 
     def shear(self, pos):
-        '''Returns the contribution to the shear load at pos.'''
+        '''Returns the contribution of the load to the shear at pos.'''
         assert pos >= 0
         if pos < self.pos:
             return 0.0
@@ -64,7 +64,7 @@ class DistLoad(Load):
         Load.__init__(self, size, float(self.start+self.end)/2)
 
     def __str__(self):
-        r = "distributed load of {} N @ {}--{} mm."
+        r = "constant distributed load of {} N @ {}--{} mm."
         return r.format(self.size, self.start, self.end)
 
     def moment(self, pos):
@@ -85,6 +85,32 @@ class DistLoad(Load):
         extent = float(self.end - self.start)
         offs = float(pos - self.start)
         return self.size*offs/extent
+
+class TriangleLoad(DistLoad):
+    '''Linearly rising distributed load.'''
+
+    def __init__(self, size, pos):
+        DistLoad.__init__(self, size, pos)
+        self.q = size/(pos[1]-pos[0])
+
+    def __str__(self):
+        r = "linearly {} distributed load of {} N @ {}--{} mm."
+        if self.q > 0.0:
+            direction = 'ascending'
+        else:
+            direction = 'descending'
+        return r.format(direction, self.size, self.start, self.end)
+
+    def moment(self, pos):
+        pass
+
+    def shear(self, pos):
+        assert pos >= 0
+        if pos <= self.start:
+            return 0.0
+        if pos >= self.end:
+            return self.size
+        pass
 
 def kg2N(k):
     '''Converts kilograms to Newtons.'''
@@ -174,11 +200,12 @@ def loadcase(D, E, xsecprops, supports, shear=True):
     The I is the second area moment of the homogenized cross-section in mm⁴. 
     GA is the shear stiffness in N. The e* values are the distance from the 
     neutral line of the cross-section to the top and bottom of the material 
-    in mm respectively. 
+    in mm respectively. The latter should be negative.
     - supports: A list of positions of the two supports
-    Returns a tuple of three lists containing the deflection, 
+    Returns a tuple of four lists containing the bending moment, deflection, 
     stress at the top and stress at the bottom of the cross-section.
-    -shear: Indicates wether shear deflection should be taken into account. True by default.'''
+    -shear: Indicates wether shear deflection should be taken into
+    account. True by default.'''
     supports = _supcheck(D, supports)
     M = _integrate(D)
     xvals = range(len(D))
@@ -194,7 +221,7 @@ def loadcase(D, E, xsecprops, supports, shear=True):
         dy_tot = dy_b
     y_tot = _integrate(dy_tot)
     y_tot = _align(y_tot, supports)
-    return (y_tot, top, bottom)
+    return (M, y_tot, top, bottom)
 
 # Tests
 if __name__ == '__main__':
