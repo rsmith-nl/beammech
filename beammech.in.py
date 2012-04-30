@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright © 2012 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Time-stamp: <2012-04-28 20:25:21 rsmith>
+# Time-stamp: <2012-05-01 00:45:43 rsmith>
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -91,26 +91,38 @@ class TriangleLoad(DistLoad):
 
     def __init__(self, size, pos):
         DistLoad.__init__(self, size, pos)
-        self.q = size/(pos[1]-pos[0])
+        q = 2*size/(pos[1]-pos[0])**2
+        L = max(pos)-min(pos)
+        self.pos = min(pos)+2.0*L/3.0
+        self.V = [q*(i+0.5) for i in xrange(0, L)]
+        if pos[0] < pos[1]:
+            self.V = [q*(i+0.5) for i in xrange(0, L)]
+        elif pos[0] > pos[1]:
+            self.V = [q*(i-0.5) for i in xrange(L, 0, -1)]
+        else:
+            raise ValueError
 
     def __str__(self):
         r = "linearly {} distributed load of {} N @ {}--{} mm."
-        if self.q > 0.0:
+        if pos[0] < pos[1]:
             direction = 'ascending'
         else:
             direction = 'descending'
         return r.format(direction, self.size, self.start, self.end)
 
     def moment(self, pos):
-        pass
+        assert pos >= 0
+        d = self.start-pos
+        return sum( [(d+i+0.5)*self.V[i] for i in xrange(0, len(self.V))])
 
     def shear(self, pos):
         assert pos >= 0
-        if pos <= self.start:
+        if pos < self.start:
             return 0.0
-        if pos >= self.end:
+        if pos > self.end:
             return self.size
-        pass
+        frac = pos-self.start+1
+        return sum(self.V[0:frac])
 
 def kg2N(k):
     '''Converts kilograms to Newtons.'''
@@ -222,27 +234,3 @@ def loadcase(D, E, xsecprops, supports, shear=True):
     y_tot = _integrate(dy_tot)
     y_tot = _align(y_tot, supports)
     return (M, y_tot, top, bottom)
-
-# Tests
-if __name__ == '__main__':
-    print 'Test Loads'
-    PL1 = Load(-1, 50)
-    print PL1
-    DL1 = DistLoad(-5, [3, 8])
-    print DL1
-    print 'should be 0:', DL1.moment(5.5)
-    print 'should be negative:', DL1.moment(3)
-    print 'should be positive:', DL1.moment(8)
-    print 'Test shearforce()'
-    Dx, P, Q = shearforce(100, PL1, [0, 100])
-    print 'Reaction: ', P
-    print 'Reaction: ', Q
-    print Dx
-    print 'test loadcase()'
-    def xsec_test(x):
-        return (100, 1e12, 5, -10)
-    y, t, b = loadcase(Dx, 70, xsec_test, [P.pos, Q.pos])
-    print 'Calculated maximum deflection: {:.2f}'.format(y[50])
-    print 'Theoretical: {:.2f}'.format(-1.0*100.0**3/(48*70*100.0))
-    rs = 'Calculated stresses at x=50: top {} MPa, bottom {} MPa'
-    print rs.format(t[50], b[50])
