@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright © 2012 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Time-stamp: <2012-04-28 20:20:48 rsmith>
+# Time-stamp: <2012-05-01 03:51:48 rsmith>
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -81,6 +81,28 @@ def loadcase2():
     st = 'Deflection under pure bending and shear [beammech]: {:.2f} mm.\n'
     print st.format(y[500])
 
+def loadcase3():
+    '''Triangle load over the whole beam that is supported at both ends.'''
+    global E, L, F
+    maxx = int(0.519*L)
+    supports = (0, L)
+    P = beammech.TriangleLoad(F, (0,L))
+    # Calculate the shear force in the cross-section every [mm], 
+    # and the reaction forces at the supports.
+    D, Ra, Rb =  beammech.shearforce(L, P, supports)
+    # Calculate the load case without shear deflection.
+    M, y, t, b = beammech.loadcase(D, E, xsecprops_test, supports, False)
+    print 'Loadcase 3, {}'.format(P)
+    res = xsecprops_test(0)
+    print 'Deflection under pure bending [beammech]: {:.2f} mm.'.format(y[maxx])
+    st = 'Deflection under pure bending [formula]: {:.2f} mm.'
+    print st.format(0.01304*F*L**3/(res[0]*E))
+    M, y, t, b = beammech.loadcase(D, E, xsecprops_test, supports)
+    st = 'Deflection under pure bending and shear [beammech]: {:.2f} mm.\n'
+    print st.format(y[maxx])
+
+
 if __name__ == '__main__':
     loadcase1()
     loadcase2()
+    loadcase3()

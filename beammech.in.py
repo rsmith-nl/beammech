@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright © 2012 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Time-stamp: <2012-05-01 00:45:43 rsmith>
+# Time-stamp: <2012-05-01 03:51:19 rsmith>
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -91,10 +91,9 @@ class TriangleLoad(DistLoad):
 
     def __init__(self, size, pos):
         DistLoad.__init__(self, size, pos)
-        q = 2*size/(pos[1]-pos[0])**2
+        q = 2.0*size/((pos[1]-pos[0])**2)
         L = max(pos)-min(pos)
         self.pos = min(pos)+2.0*L/3.0
-        self.V = [q*(i+0.5) for i in xrange(0, L)]
         if pos[0] < pos[1]:
             self.V = [q*(i+0.5) for i in xrange(0, L)]
         elif pos[0] > pos[1]:
@@ -104,7 +103,7 @@ class TriangleLoad(DistLoad):
 
     def __str__(self):
         r = "linearly {} distributed load of {} N @ {}--{} mm."
-        if pos[0] < pos[1]:
+        if self.start < self.end:
             direction = 'ascending'
         else:
             direction = 'descending'
@@ -113,7 +112,7 @@ class TriangleLoad(DistLoad):
     def moment(self, pos):
         assert pos >= 0
         d = self.start-pos
-        return sum( [(d+i+0.5)*self.V[i] for i in xrange(0, len(self.V))])
+        return sum([(d+i+0.5)*self.V[i] for i in xrange(0, len(self.V))])
 
     def shear(self, pos):
         assert pos >= 0
