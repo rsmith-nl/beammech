@@ -1,8 +1,8 @@
-INTRODUCTION
+# Introduction #
 
 Over the years I've written several programs in languages from Perl to Lua to
-solve the differential equations for pure bending [y'' = M/(E·I)] and shear
-[y' = α·V/(G·A)] of beams.
+solve the differential equations for pure bending y'' = M/(E·I) and shear
+y' = α·V/(G·A) of beams.
 
 For the simple cases of pure bending (where E·I is constant over the length of
 the beam, and where shear deformation is ignored), the solution can be found
@@ -16,7 +16,7 @@ These programs all followed the same pattern. So I decided to separate the
 re-usable parts and put them in a module. That was the birth of beammech.py.
 
 
-USING BEAMMECH.PY
+# Using beammech.py #
 
 The first task is to define a function that gives the cross-section properties
 along the length of the beam. It takes a single integer argument indicating
