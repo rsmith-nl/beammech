@@ -1,0 +1,104 @@
+%!PS-Adobe-2.0
+%%BoundingBox: 0 0 369 199
+%%Creator: R.F. Smith
+% Copyright © 2012 R.F. Smith <rsmith@xs4all.nl>
+% Time-stamp: <2012-05-09 12:18:55 rsmith>
+%%Pages: 1
+%%DocumentPaperSizes: a4
+%%EndComments
+%%Page: 1 1
+
+/cm { 28.346457 mul } bind def
+/mm { 2.8346457 mul } bind def
+
+% A4 papier
+/width {596} bind def
+/height {842} bind def
+
+% Draw a 1x1 cm grid
+/grid {
+    gsave
+    .1 setlinewidth
+    .7 1 1 setrgbcolor
+    0 0 moveto
+    0 1 13 {
+        0 7 cm rlineto
+        1 cm -7 cm rmoveto
+    } for
+    0 0 moveto
+    0 1 7 {
+        13 cm 0 rlineto
+        -13 cm 1 cm rmoveto
+    } for
+    stroke
+    grestore
+} bind def
+
+% Put a string from the symbol font, advance the point
+% Usage: (text) pointsize symbol
+/symbol {
+    currentpoint moveto
+    gsave
+    /Symbol findfont
+    exch scalefont
+    setfont
+    dup stringwidth pop exch
+    show
+    grestore
+    0 rmoveto
+} bind def
+
+
+% comment out for final version!
+grid
+
+% Put your stuff here.
+
+% Oppervlak
+gsave
+1 .7 dup setrgbcolor
+4 cm 1 cm moveto
+0 0.5 cm rlineto
+1 cm 0 cm rlineto
+0 -0.5 cm rlineto closepath
+fill
+5 cm 1 cm moveto
+0 1.5 cm rlineto
+1 cm 0 cm rlineto
+0 -1.5 cm rlineto closepath
+fill
+6 cm 1 cm moveto
+0 2.5 cm rlineto
+1 cm 0 cm rlineto
+0 -2.5 cm rlineto closepath
+fill
+7 cm 1 cm moveto
+0 3.5 cm rlineto
+1 cm 0 cm rlineto
+0 -3.5 cm rlineto closepath
+fill
+8 cm 1 cm moveto
+0 4.5 cm rlineto
+1 cm 0 cm rlineto
+0 -4.5 cm rlineto closepath
+fill
+grestore
+
+% Lijn
+gsave
+2 setlinewidth
+1 cm 1 cm moveto
+11 cm 0 rlineto stroke
+grestore
+
+% Belastingsgrafiek
+gsave
+4 cm 1 cm moveto
+5 cm 5 cm rlineto
+0 -5 cm rlineto stroke
+grestore
+
+
+showpage
+%%Trailer
+%%EOF
