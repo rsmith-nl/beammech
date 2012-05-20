@@ -5,7 +5,7 @@
 MOD = beammech
 SRCS = ${MOD}.py
 
-all: .git/hooks/post-commit setup.py ${MOD}.py
+all: .git/hooks/post-commit
 #endskip
 PYSITE!=python -c 'import site; print site.getsitepackages()[0]'
 
@@ -39,7 +39,7 @@ dist:
 #	cd dist ; ls -l py-stl-* | awk '{printf "SIZE (%s) = %d\n", $$9, $$5};' >>../port/distinfo
 
 clean::
-	rm -rf dist build backup-*.tar.gz *.py[co] ${MOD}.py setup.py MANIFEST tests/*.d
+	rm -rf dist build backup-*.tar.gz *.py[co] MANIFEST tests/*.d
 #	rm -f port/Makefile port/distinfo
 
 backup:
@@ -51,13 +51,4 @@ check: ${MOD}.py .IGNORE
 
 .git/hooks/post-commit: tools/post-commit
 	install -m 755 $> $@
-
-tools/replace.sed: .git/index
-	tools/post-commit
-
-setup.py: setup.in.py tools/replace.sed
-	sed -f tools/replace.sed setup.in.py >$@
-
-${MOD}.py: ${MOD}.in.py tools/replace.sed
-	sed -f tools/replace.sed ${MOD}.in.py >$@
 #endskip

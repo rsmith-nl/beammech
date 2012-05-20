@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright © 2012 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Time-stamp: <2012-05-01 03:51:19 rsmith>
+# $Date$
 # 
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -28,7 +28,7 @@
 
 import math
 
-__version__ = 'UkZTVkVS'
+__version__ = '$Revision$'[11:-2]
 
 class Load(object):
     '''Point load.'''

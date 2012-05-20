@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 # Installation script for beammech
-#
 # R.F. Smith <rsmith@xs4all.nl>
-# Time-stamp: <2012-04-15 20:40:52 rsmith>
+# $Date$
 
 from distutils.core import setup
 
@@ -11,7 +10,7 @@ with open('README.txt') as file:
 
 
 setup(name='beammech',
-      version='UkZTVkVS',
+      version='$Revision$'[11:-2],
       license='BSD',
       description='Module to evaluate loaded beams.',
       author='Roland Smith', author_email='rsmith@xs4all.nl',

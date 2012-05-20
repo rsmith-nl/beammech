@@ -1,4 +1,10 @@
 #!/bin/sh
+# Script to be executed after a successfull commit.
+# 
+# Looks for changed files that contain the keywords, removes those files
+# and checks them out again to refresh the keywords.
 
-git --no-pager log -1 HEAD --pretty=format:"s|UkZTVkVS|%h|%n" >tools/replace.sed
-git --no-pager log -1 HEAD --pretty=format:"s|UkZTREFU|%ci|'"|sed -e "s/ .*/|/" >>tools/replace.sed
+FILES=`ls *.py`
+rm -f $FILES
+git checkout $FILES
+
