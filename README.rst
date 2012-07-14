@@ -1,4 +1,5 @@
-# Introduction #
+Introduction
+============
 
 Over the years I've written several programs in languages from Perl to Lua to
 solve the differential equations for pure bending y'' = M/(E·I) and shear
@@ -23,7 +24,8 @@ segment dx for summation (integration) is 1 mm, because that makes the math a
 whole lot simpler. It is also a good match for the kind of problems I use it
 for.
 
-# Using beammech.py #
+Using beammech.py
+=================
 
 The first task is to define a function that gives the cross-section properties
 along the length of the beam. It takes a single integer argument indicating

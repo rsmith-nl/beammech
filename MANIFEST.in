@@ -1,0 +1,4 @@
+include Makefile
+include tests/general.py
+include README.rst
+
