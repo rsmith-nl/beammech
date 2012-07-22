@@ -5,7 +5,7 @@
 
 from distutils.core import setup
 
-with open('README.txt') as file:
+with open('README.rst') as file:
     ld = file.read()
 
 
