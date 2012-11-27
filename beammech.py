@@ -32,11 +32,16 @@ __version__ = '$Revision$'[11:-2]
 
 class Load(object):
     '''Point load.'''
+
     def __init__(self, size, pos):
         '''Create a point load.
-        - size: force in Newtons
-        - pos: distance of the force from the origin in mm.'''
-        assert pos >= 0, 'Positions must be positive.'
+
+        Arguments
+        size -- force in Newtons.
+        pos -- distance of the force from the origin in mm.
+        '''
+        if pos < 0:
+            raise ValueError('Positions must be positive.')
         self.size = float(size)
         self.pos = pos
 
@@ -44,12 +49,14 @@ class Load(object):
         return "point load of {} N @ {} mm.".format(self.size, self.pos)
 
     def moment(self, pos):
-        '''Calculate the bending moment the load exerts at pos.'''
+        '''Returns the bending moment the load exerts at pos.
+        '''
         assert pos >= 0
         return (self.pos-pos)*self.size
 
     def shear(self, pos):
-        '''Returns the contribution of the load to the shear at pos.'''
+        '''Returns the contribution of the load to the shear at pos.
+        '''
         assert pos >= 0
         if pos < self.pos:
             return 0.0
@@ -57,6 +64,7 @@ class Load(object):
 
 class DistLoad(Load):
     '''Evenly distributed load.'''
+
     def __init__(self, size, pos):
         assert pos[0] >= 0 and pos[1] >= 0 
         self.start = int(min(pos))
@@ -132,27 +140,26 @@ def shearforce(length, loads, supports):
     returned list has a resolution of 1 mm per list unit. The shear force at
     index p exists over the domain from p to p+1.
 
-    - length: length of the product in millimeters.
-    - loads: list of Loads.
-    - supports: a 2-tuple of the location in mm of the supports.
-    
     Returns a 3-tuple consisting of a list of shear values, 
     reaction Load R1 and reaction Load R2.
+
+    Arguments:
+    length -- length of the product in millimeters.
+    loads -- list of Loads.
+    supports -- a 2-tuple of the location in mm of the supports.
     '''
     length = int(length)
     assert length > 0, 'Beam of negative length is impossible.'
     if isinstance(loads, list):
-        assert len(loads) > 0, 'No loads specified'
+        if len(loads) == 0:
+            raise ValueError('No loads specified')
         for ld in loads:
             assert ld.pos >= 0 and ld.pos <= length, 'Load outside length'
-    else:
-        assert isinstance(loads, Load)
+    elif isinstance(loads, Load):
         loads = [loads]
-    assert len(supports) == 2, 'There must be two supports.'
-    assert 0 <= supports[0] <= length
-    assert 0 <= supports[1] <= length
-    s1 = min(supports) # Reaction force R1 applies here.
-    s2 = max(supports) # Reaction force R2 applies here.
+    else:
+        raise ValueError('Not a Load or a list of Loads')
+    s1, s2 = _supcheck(length, supports)
     # Moment balance around s1
     moments = sum([ld.moment(s1) for ld in loads])
     R2 = Load(-moments/(s2-s1), s2)
@@ -169,22 +176,26 @@ def shearforce(length, loads, supports):
     return (rv, R1, R2)
 
 def _integrate(src):
-    '''Integrates a list of values. No integration constants!'''
-    assert len(src) > 0
+    '''Integrates a list of values. Does not use integration constants!
+    '''
+    if len(src) == 0:
+        raise ValueError('Nothing to integrate')
     rv = [0.0]
     for i in range(len(src)-1):
         rv.append(rv[-1]+src[i])
     return rv
 
-def _supcheck(src, spts):
+def _supcheck(length, spts):
     '''Check the supports argument.'''
-    assert len(spts) == 2, 'There must be two supports!'
+    if len(spts) != 2:
+        raise ValueError('There must be two supports!')
     if isinstance(spts[0], Load):
-        rv = [spts[0].pos, spts[1].pos]
+        t = [spts[0].pos, spts[1].pos]
     else:
-        rv = [int(spts[0]), int(spts[1])]
-    assert 0 <= rv[0] <= len(src), 'The first support lies outside the beam.'
-    assert 0 <= rv[1] <= len(src), 'The second support lies outside the beam.'
+        t = [int(spts[0]), int(spts[1])]
+    rv = (min(t), max(t))
+    if rv[0] < 0 or rv[1] > length:
+        raise ValueError('Support(s) outside the length of the beam.')
     return rv
 
 def _align(src, supports):
@@ -204,19 +215,23 @@ def _align(src, supports):
 
 def loadcase(D, E, xsecprops, supports, shear=True):
     '''Calculates a loadcase.
-    - D: list of shear force values along the length of the beam.
-    - E: Young's Modulus of the homogenized beam,
-    - xsecprops: function that takes a single position argument and returns 
-    a four-tuple (I, GA, etop, ebot) of the cross-section at that position. 
+
+    Returns a tuple of four lists containing the bending moment, deflection, 
+    stress at the top and stress at the bottom of the cross-section.
+
+    Arguments:
+    D -- list of shear force values along the length of the beam.
+    E -- Young's Modulus of the homogenized beam,
+    xsecprops -- function that takes a single position argument and returns 
+    a four-tuple (I, GA, etop, ebot) of the cross-section at that position.
     The I is the second area moment of the homogenized cross-section in mm⁴. 
     GA is the shear stiffness in N. The e* values are the distance from the 
     neutral line of the cross-section to the top and bottom of the material 
     in mm respectively. The latter should be negative.
-    - supports: A list of positions of the two supports
-    Returns a tuple of four lists containing the bending moment, deflection, 
-    stress at the top and stress at the bottom of the cross-section.
-    -shear: Indicates wether shear deflection should be taken into
-    account. True by default.'''
+    supports -- A list of positions of the two supports.
+    shear -- Indicates wether shear deflection should be taken into
+    account. True by default.
+    '''
     supports = _supcheck(D, supports)
     M = _integrate(D)
     xvals = range(len(D))
