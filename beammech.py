@@ -144,10 +144,10 @@ def patientload(mass, s):
     fractions = [(0.148*f, (s + 0, s + 450)), # low. legs, 14.7% from 0 to 450 mm.
                  (0.222*f, (s + 450, s + 1000)), # upper legs
                  (0.074*f, (s + 1000, s + 1180)), # hands
-                 (0.407*f, (s + 1000, s + 1700)), # torso
+                 (0.408*f, (s + 1000, s + 1700)), # torso
                  (0.074*f, (s + 1200, s + 1700)), # arms
                  (0.074*f, (s + 1220, s + 1900))] #head
-    return [Distload(i[0], i[1]) for i in fractions]
+    return [DistLoad(i[0], i[1]) for i in fractions]
 
 
 def kg2N(k):
