@@ -41,6 +41,18 @@ def _angle(tp, cp):
         dtheta += 2*math.pi
     return dtheta
 
+
+def _checkp(p):
+    if isinstance(p, tuple) and len(p) == 2:
+        return [p]
+    elif (isinstance(p, list) and len(p) > 0 and 
+          all([isinstance(j, tuple) for j in p]) and
+          all([len(j) == 2 for j in p])):
+        return p
+    else:
+        raise ValueError("p should be a 2-tuple or a list of 2-tuples.")
+
+
 class Contour(object):
     """Contains a closed contour."""
 
@@ -52,16 +64,8 @@ class Contour(object):
         """
         if self.closed:
             raise ValueError("Contour is already closed")
-        if isinstance(p, tuple) and len(p) == 2:
-            newpoints = [p]
-        elif (isinstance(p, list) and len(p) > 0 and 
-              all([isinstance(j, tuple) for j in p]) and
-              all([len(j) == 2 for j in p])):
-            newpoints = p
-        else:
-            raise ValueError("p should be a 2-tuple or a list of 2-tuples.")
-        self.points += [(float(i[0]), float(i[1])) for i in
-                        newpoints]
+        p = _checkp(p)
+        self.points += [(float(i[0]), float(i[1])) for i in p]
         x = [i[0] for i in self.points]
         y = [i[1] for i in self.points]
         self.bbox = (min(x), max(y), max(x), min(y))
@@ -79,7 +83,8 @@ class Contour(object):
         self.closed = False
         self.points = []
         self.bbox = (None, None, None, None) # left, top, right, bottom
-        self.addpoints(p) 
+        if p:
+            self.addpoints(p) 
 
     def inside(self, p):
         """Check if one or more points are inside of the contour.
@@ -90,8 +95,7 @@ class Contour(object):
         if not self.closed:
             raise ValueError('Contour must be closed.')
         res = []
-        if isinstance(p, tuple) and len(p) == 2:
-            p = [p]
+        p = _checkp(p)
         for i in p: # Check first if it is outside the bounding box
             if (i[0] < self.bbox[0] or i[1] > self.bbox[1] or  
                 i[0] > self.bbox[2] or i[1] < self.bbox[3]):
@@ -118,6 +122,19 @@ class Contour(object):
             return True
         return False
 
+    def ipoints(self, y):
+        rv = []
+        if y > self.bbox[1] or y < self.bbox[3]:
+            return rv
+        for i in xrange(len(self.points-1)):
+            xp = [self.points[i][0], self.points[i+1][0]]
+            yp = [self.points[i][1], self.points[i+1][1]]
+            if y < min(yp) or y > max(yp):
+                continue
+            dx = xp[0] - xp[1]
+            dy = yp[0] - yp[1]
+            
+
 
 class Xsec(object):
     
@@ -125,7 +142,10 @@ class Xsec(object):
         self.contours = []
 
 
-    def addcontour(self, c, E, G, core=False):
-        self.contours.append((c, float(E), float(G), core))
+    def addcontour(self, c, E, G):
+        if not isinstance(c, Contour) and not c.closed:
+            raise ValueError('must provide a closed contour object')
+        self.contours.append((c, float(E), float(G)))
     
-    def cut(self, c)
+    def addhole(self, c):
+        self.addcontour(c, 0.0, 0.0)
