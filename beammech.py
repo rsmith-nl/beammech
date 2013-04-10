@@ -43,7 +43,7 @@ class Load(object):
         if pos < 0:
             raise ValueError('Positions must be positive.')
         self.size = float(size)
-        self.pos = pos
+        self.pos = int(pos)
 
     def __str__(self):
         return "point load of {} N @ {} mm.".format(self.size, self.pos)
@@ -138,9 +138,9 @@ def patientload(mass, s):
 
     Argument:
     mass -- mass of the patient in kg.
-    s -- location of the feet in mm. Head points to the right.
+    s -- location of the feet in mm. Head lies at s+1900.
     '''
-    f = kg2N(mass)
+    f = -kg2N(mass)
     fractions = [(0.148*f, (s + 0, s + 450)), # low. legs, 14.7% from 0 to 450 mm.
                  (0.222*f, (s + 450, s + 1000)), # upper legs
                  (0.074*f, (s + 1000, s + 1180)), # hands
@@ -154,18 +154,20 @@ def kg2N(k):
     '''Converts kilograms to Newtons.'''
     return float(k)*9.81
 
-def shearforce(length, loads, supports):
+def shearforce(length, loads, supports=None):
     '''Calculates a list of shear forces based on a list of loads. The
-    returned list has a resolution of 1 mm per list unit. The shear force at
-    index p exists over the domain from p to p+1.
+    returned list has a resolution of 1 mm per list unit. The shear
+    force at index p exists over the domain from p to p+1.
 
-    Returns a 3-tuple consisting of a list of shear values, 
-    reaction Load R1 and reaction Load R2.
+    Returns a 3-tuple consisting of a list of shear values, reaction
+    Load R1 and either Load R2 for a simple support or reaction moment
+    R1 when clamped.
 
     Arguments:
     length -- length of the product in millimeters.
     loads -- list of Loads.
-    supports -- a 2-tuple of the location in mm of the supports.
+    supports -- a 2-tuple of the location in mm of the supports, or
+    None if the beam is clamped at x=0.
     '''
     length = int(length)
     assert length > 0, 'Beam of negative length is impossible.'
@@ -181,8 +183,11 @@ def shearforce(length, loads, supports):
     s1, s2 = _supcheck(length, supports)
     # Moment balance around s1
     moments = sum([ld.moment(s1) for ld in loads])
-    R2 = Load(-moments/(s2-s1), s2)
-    loads.append(R2)
+    if s2:
+        R2 = Load(-moments/(s2-s1), s2)
+        loads.append(R2)
+    else:
+        R2 = moments
     # Force equilibrium
     R1 = Load(-sum([ld.size for ld in loads]), s1)
     loads.append(R1)
@@ -206,6 +211,8 @@ def _integrate(src):
 
 def _supcheck(length, spts):
     '''Check the supports argument.'''
+    if spts == None:
+        return (0, None)
     if len(spts) != 2:
         raise ValueError('There must be two supports!')
     if isinstance(spts[0], Load):
@@ -217,26 +224,29 @@ def _supcheck(length, spts):
         raise ValueError('Support(s) outside the length of the beam.')
     return rv
 
-def _align(src, supports):
-    '''Transform a list of values such that the value at the supports is 
-    zero.'''
+def _align(src, s1, s2):
+    '''In the situation with two supports, transform a list of values such
+    that the value at the supports is zero.
+    '''
     assert len(src) > 0
-    supports = _supcheck(src, supports)
-    anchor = supports[0]
+    if s2 is None:
+        return src
+    anchor = s1
     # First, translate the whole list so that the value at the 
     # index anchor is zero.
     translated = [src[i]-src[anchor] for i in range(len(src))]
     # Then rotate around the anchor so that the deflection at the other
     # support is also 0.
-    delta = translated[supports[1]]/math.fabs(supports[0]-supports[1])
+    delta = translated[s2]/math.fabs(s1-s2)
     rv = [translated[i]-delta*(i-anchor) for i in range(len(src))]
     return rv
 
-def loadcase(D, E, xsecprops, supports, shear=True):
+def loadcase(D, E, xsecprops, supports=None, shear=True):
     '''Calculates a loadcase.
 
-    Returns a tuple of four lists containing the bending moment, deflection, 
-    stress at the top and stress at the bottom of the cross-section.
+    Returns a tuple of four lists containing the bending moment,
+    deflection, stress at the top and stress at the bottom of the
+    cross-section.
 
     Arguments:
     D -- list of shear force values along the length of the beam.
@@ -247,12 +257,17 @@ def loadcase(D, E, xsecprops, supports, shear=True):
     GA is the shear stiffness in N. The e* values are the distance from the 
     neutral line of the cross-section to the top and bottom of the material 
     in mm respectively. The latter should be negative.
-    supports -- A list of positions of the two supports.
+    supports -- A list of positions of the two supports, or None of
+    the beam is clamped at x=0.
     shear -- Indicates wether shear deflection should be taken into
     account. True by default.
+
     '''
-    supports = _supcheck(D, supports)
+    s1, s2 = _supcheck(D, supports)
     M = _integrate(D)
+    if s2 is None:
+        mr = M[-1]
+        M = [j-mr for j in M]
     xvals = range(len(D))
     I, GA, etop, ebot = zip(*[xsecprops(x) for x in xvals])
     top = [-M[x]*etop[x]/I[x] for x in xvals]
@@ -265,5 +280,5 @@ def loadcase(D, E, xsecprops, supports, shear=True):
     else:
         dy_tot = dy_b
     y_tot = _integrate(dy_tot)
-    y_tot = _align(y_tot, supports)
+    y_tot = _align(y_tot, s1, s2)
     return (M, y_tot, top, bottom)
