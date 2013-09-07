@@ -141,7 +141,7 @@ def patientload(mass, s):
     s -- location of the feet in mm. Head lies at s+1900.
     '''
     f = -kg2N(mass)
-    fractions = [(0.148*f, (s + 0, s + 450)), # low. legs, 14.7% from 0 to 450 mm.
+    fractions = [(0.148*f, (s + 0, s + 450)), # l. legs, 14.7% from 0 to 450 mm.
                  (0.222*f, (s + 450, s + 1000)), # upper legs
                  (0.074*f, (s + 1000, s + 1180)), # hands
                  (0.408*f, (s + 1000, s + 1700)), # torso
@@ -153,6 +153,7 @@ def patientload(mass, s):
 def kg2N(k):
     '''Converts kilograms to Newtons.'''
     return float(k)*9.81
+
 
 def shearforce(length, loads, supports=None):
     '''Calculates a list of shear forces based on a list of loads. The
@@ -195,9 +196,10 @@ def shearforce(length, loads, supports=None):
     contribs = []
     for ld in loads:
         contribs.append([ld.shear(x) for x in xvals])
-    rv =  map(sum, zip(*contribs))
+    rv =  map(sum, zip(*contribs)) # pylint: disable=W0141
     rv.append(0.0)
     return (rv, R1, R2)
+
 
 def _integrate(src):
     '''Integrates a list of values. Does not use integration constants!
@@ -208,6 +210,7 @@ def _integrate(src):
     for i in range(len(src)-1):
         rv.append(rv[-1]+src[i])
     return rv
+
 
 def _supcheck(length, spts):
     '''Check the supports argument.'''
@@ -223,6 +226,7 @@ def _supcheck(length, spts):
     if rv[0] < 0 or rv[1] > length:
         raise ValueError('Support(s) outside the length of the beam.')
     return rv
+
 
 def _align(src, s1, s2):
     '''In the situation with two supports, transform a list of values such
@@ -240,6 +244,7 @@ def _align(src, s1, s2):
     delta = translated[s2]/math.fabs(s1-s2)
     rv = [translated[i]-delta*(i-anchor) for i in range(len(src))]
     return rv
+
 
 def loadcase(D, E, xsecprops, supports=None, shear=True):
     '''Calculates a loadcase.
@@ -282,3 +287,22 @@ def loadcase(D, E, xsecprops, supports=None, shear=True):
     y_tot = _integrate(dy_tot)
     y_tot = _align(y_tot, s1, s2)
     return (M, y_tot, top, bottom)
+
+
+def calculate(length, loads, E, xsecprops, supports=None, shear=True):
+    """Convenience function to combine the whole calculation.
+    
+    :length: The length of the beam in mm.
+             The leftmost end of the beam is x=0.
+    :loads: Either an instance of a Load, or a list or tuple of them.
+    :E: The homogenized Young's modulus of the beam's material.
+    :xsecprops: A function that defines the properties of the cross-section.
+    :supports: A list or tuple of the two locations (in mm) where the beam is
+               supported, or None. In the latter case the beam is clamped
+               at x=0
+    :shear: A boolean that indicates whether the contribution of shear to the
+    deflection is to be taken into account.
+    """
+    D, R1, R2 = shearforce(length, loads, supports)
+    M, y, st, sb = loadcase(D, E, xsecprops, supports, shear)
+    return D, M, y, st, sb, R1, R2
