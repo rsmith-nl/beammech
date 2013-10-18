@@ -275,7 +275,10 @@ def loadcase(D, E, xsecprops, supports=None, shear=True):
         mr = M[-1]
         M = [j-mr for j in M]
     xvals = range(len(D))
-    I, GA, etop, ebot = zip(*[xsecprops(x) for x in xvals])
+    if isinstance(xsecprops, (list, tuple)):
+        I, GA, etop, ebot = zip(*xsecprops)
+    else:
+        I, GA, etop, ebot = zip(*[xsecprops(x) for x in xvals])
     top = [-M[x]*etop[x]/I[x] for x in xvals]
     bottom = [-M[x]*ebot[x]/I[x] for x in xvals]
     ddy_b = [M[x]/(E*I[x]) for x in xvals]
