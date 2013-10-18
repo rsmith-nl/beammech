@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Copyright © 2012,2013 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
 # $Date$
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
@@ -11,7 +11,7 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 
+#
 # THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND ANY
 # EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 # WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -66,7 +66,7 @@ class DistLoad(Load):
     '''Evenly distributed load.'''
 
     def __init__(self, size, pos):
-        assert pos[0] >= 0 and pos[1] >= 0 
+        assert pos[0] >= 0 and pos[1] >= 0
         self.start = int(min(pos))
         self.end = int(max(pos))
         Load.__init__(self, size, float(self.start+self.end)/2)
@@ -236,7 +236,7 @@ def _align(src, s1, s2):
     if s2 is None:
         return src
     anchor = s1
-    # First, translate the whole list so that the value at the 
+    # First, translate the whole list so that the value at the
     # index anchor is zero.
     translated = [src[i]-src[anchor] for i in range(len(src))]
     # Then rotate around the anchor so that the deflection at the other
@@ -256,12 +256,13 @@ def loadcase(D, E, xsecprops, supports=None, shear=True):
     Arguments:
     D -- list of shear force values along the length of the beam.
     E -- Young's Modulus of the homogenized beam,
-    xsecprops -- function that takes a single position argument and returns 
+    xsecprops -- function that takes a single position argument and returns
     a four-tuple (I, GA, etop, ebot) of the cross-section at that position.
-    The I is the second area moment of the homogenized cross-section in mm⁴. 
-    GA is the shear stiffness in N. The e* values are the distance from the 
-    neutral line of the cross-section to the top and bottom of the material 
-    in mm respectively. The latter should be negative.
+    Alternatively, it should be a list or tuple of the aforementioned
+    four-tuples. The I is the second area moment of the homogenized
+    cross-section in mm⁴. GA is the shear stiffness in N. The e* values are
+    the distance from the neutral line of the cross-section to the top and
+    bottom of the material in mm respectively. The latter should be negative.
     supports -- A list of positions of the two supports, or None of
     the beam is clamped at x=0.
     shear -- Indicates wether shear deflection should be taken into
@@ -291,7 +292,7 @@ def loadcase(D, E, xsecprops, supports=None, shear=True):
 
 def calculate(length, loads, E, xsecprops, supports=None, shear=True):
     """Convenience function to combine the whole calculation.
-    
+
     :length: The length of the beam in mm.
              The leftmost end of the beam is x=0.
     :loads: Either an instance of a Load, or a list or tuple of them.
