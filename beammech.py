@@ -246,28 +246,28 @@ def _align(src, s1, s2):
     return rv
 
 
-def loadcase(D, E, xsecprops, supports=None, shear=True):
+def loadcase(D, E, xsecprops, supports=None, shear=True, strain=False):
     '''Calculates a loadcase.
 
     Returns a tuple of four lists containing the bending moment,
-    deflection, stress at the top and stress at the bottom of the
+    deflection, stress (or strain) at the top and the bottom of the
     cross-section.
 
-    Arguments:
-    D -- list of shear force values along the length of the beam.
-    E -- Young's Modulus of the homogenized beam,
-    xsecprops -- function that takes a single position argument and returns
-    a four-tuple (I, GA, etop, ebot) of the cross-section at that position.
-    Alternatively, it should be a list or tuple of the aforementioned
+    :param D: List of shear force values along the length of the beam.
+    :param E: Young's Modulus of the homogenized beam.
+    :param xsecprops: function that takes a single position argument and
+    returns a four-tuple (I, GA, etop, ebot) of the cross-section at that
+    position. Alternatively, it should be a list or tuple of the aforementioned
     four-tuples. The I is the second area moment of the homogenized
     cross-section in mm⁴. GA is the shear stiffness in N. The e* values are
     the distance from the neutral line of the cross-section to the top and
     bottom of the material in mm respectively. The latter should be negative.
-    supports -- A list of positions of the two supports, or None of
+    :param supports: A list of positions of the two supports, or None of
     the beam is clamped at x=0.
-    shear -- Indicates wether shear deflection should be taken into
+    :param shear: Indicates wether shear deflection should be taken into
     account. True by default.
-
+    :param strain: Indicates wether strains should be reported at the top and
+    bottom surfaces. False by default.
     '''
     s1, s2 = _supcheck(D, supports)
     M = _integrate(D)
@@ -281,6 +281,9 @@ def loadcase(D, E, xsecprops, supports=None, shear=True):
         I, GA, etop, ebot = zip(*[xsecprops(x) for x in xvals])
     top = [-M[x]*etop[x]/I[x] for x in xvals]
     bottom = [-M[x]*ebot[x]/I[x] for x in xvals]
+    if strain:
+        top = [x/E for x in top]
+        bottom = [x/E for x in bottom]
     ddy_b = [M[x]/(E*I[x]) for x in xvals]
     dy_b = _integrate(ddy_b)
     if shear:
