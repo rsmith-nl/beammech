@@ -41,8 +41,6 @@ class Load(object):
         size -- force in Newtons.
         pos -- distance of the force from the origin in mm.
         '''
-        if pos < 0:
-            raise ValueError('Positions must be positive.')
         self.size = float(size)
         self.pos = int(pos)
 
@@ -52,13 +50,11 @@ class Load(object):
     def moment(self, pos):
         '''Returns the bending moment the load exerts at pos.
         '''
-        assert pos >= 0
         return (self.pos-pos)*self.size
 
     def shear(self, pos):
         '''Returns the contribution of the load to the shear at pos.
         '''
-        assert pos >= 0
         if pos < self.pos:
             return 0.0
         return self.size
@@ -68,7 +64,6 @@ class DistLoad(Load):
     '''Evenly distributed load.'''
 
     def __init__(self, size, pos):
-        assert pos[0] >= 0 and pos[1] >= 0
         self.start = int(min(pos))
         self.end = int(max(pos))
         Load.__init__(self, size, float(self.start+self.end)/2)
@@ -78,7 +73,6 @@ class DistLoad(Load):
         return r.format(self.size, self.start, self.end)
 
     def moment(self, pos):
-        assert pos >= 0
         if pos <= self.start or pos >= self.end:
             return Load.moment(self, pos)
         left = float(pos-self.start)
@@ -87,7 +81,6 @@ class DistLoad(Load):
         return (left**2-right**2)*self.size/(2*length)
 
     def shear(self, pos):
-        assert pos >= 0
         if pos <= self.start:
             return 0.0
         if pos >= self.end:
@@ -121,12 +114,10 @@ class TriangleLoad(DistLoad):
         return r.format(direction, self.size, self.start, self.end)
 
     def moment(self, pos):
-        assert pos >= 0
         d = self.start-pos
         return sum([(d+i+0.5)*self.V[i] for i in xrange(0, len(self.V))])
 
     def shear(self, pos):
-        assert pos >= 0
         if pos < self.start:
             return 0.0
         if pos > self.end:
@@ -174,7 +165,8 @@ def shearforce(length, loads, supports=None):
     None if the beam is clamped at x=0.
     '''
     length = int(length)
-    assert length > 0, 'Beam of negative length is impossible.'
+    if length < 1:
+        raise ValueError('Beam of negative length is impossible.')
     if isinstance(loads, list):
         if len(loads) == 0:
             raise ValueError('No loads specified')
@@ -183,7 +175,7 @@ def shearforce(length, loads, supports=None):
     elif isinstance(loads, Load):
         loads = [loads]
     else:
-        raise ValueError('Not a Load or a list of Loads')
+        raise ValueError("'loads' is not a Load or a list of Loads")
     s1, s2 = _supcheck(length, supports)
     # Moment balance around s1
     moments = sum([ld.moment(s1) for ld in loads])
@@ -207,8 +199,6 @@ def shearforce(length, loads, supports=None):
 def _integrate(src):
     '''Integrates a list of values. Does not use integration constants!
     '''
-    if len(src) == 0:
-        raise ValueError('Nothing to integrate')
     rv = [0.0]
     for i in range(len(src)-1):
         rv.append(rv[-1]+src[i])
@@ -235,7 +225,6 @@ def _align(src, s1, s2):
     '''In the situation with two supports, transform a list of values such
     that the value at the supports is zero.
     '''
-    assert len(src) > 0
     if s2 is None:
         return src
     anchor = s1
