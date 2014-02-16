@@ -48,22 +48,13 @@ class Load(object):
     def __str__(self):
         return "point load of {} N @ {} mm.".format(self.size, self.pos)
 
-    def moment(self, pos):
-        pass
-#        '''Returns the bending moment the load exerts at pos.
-#
-#        :param pos: position to calculate the moment from
-#        :returns: the moment w.r.t. pos
-#        '''
-#        return (self.pos-pos)*self.size
-
     def shear(self, length):
         '''Return the contribution of the load to the shear.
 
         :param length: length of the array to return
         :returns: array that contains the contribution of this load.
         '''
-        rv = np.zeros(length)
+        rv = np.zeros(length+1)
         rv[self.pos:] = self.size
         return rv
 
@@ -85,14 +76,12 @@ class DistLoad(Load):
         r = "constant distributed load of {} N @ {}--{} mm."
         return r.format(self.size, self.start, self.end)
 
-    def moment(self, pos):
-        pass
-
     def shear(self, length):
-        rem = length - self.end - 1
-        parts = (np.zeros(self.start-1),
-                 np.linspace(0, self.size, self.end-self.start+1),
-                 np.ones(rem)*self.size)
+        rem = length + 1 - self.end
+        d = self.end-self.start
+        q = self.size
+        parts = (np.zeros(self.start), np.linspace(0, q, d),
+                 np.ones(rem)*q)
         return np.concatenate(parts)
 
 
@@ -101,15 +90,7 @@ class TriangleLoad(DistLoad):
 
     def __init__(self, size, pos):
         DistLoad.__init__(self, size, pos)
-        q = 2.0*size/((pos[1]-pos[0])**2)
-        L = max(pos)-min(pos)
-        self.pos = min(pos)+2.0*L/3.0
-        if pos[0] < pos[1]:
-            self.V = [q*(i+0.5) for i in xrange(0, L)]
-        elif pos[0] > pos[1]:
-            self.V = [q*(i-0.5) for i in xrange(L, 0, -1)]
-        else:
-            raise ValueError
+        self.pos = min(pos)+2.0*(max(pos)-min(pos))/3.0
 
     def __str__(self):
         r = "linearly {} distributed load of {} N @ {}--{} mm."
@@ -119,18 +100,13 @@ class TriangleLoad(DistLoad):
             direction = 'descending'
         return r.format(direction, self.size, self.start, self.end)
 
-    def moment(self, pos):
-        pass
-#        d = self.start-pos
-#        return sum([(d+i+0.5)*self.V[i] for i in xrange(0, len(self.V))])
-
-    def shear(self, pos):
-        if pos < self.start:
-            return 0.0
-        if pos > self.end:
-            return self.size
-        frac = pos-self.start+1
-        return sum(self.V[0:frac])
+    def shear(self, length):
+        rem = length + 1 - self.end
+        parts = (np.zeros(self.start),
+                 np.linspace(0, self.size, self.end-self.start),
+                 np.zeros(rem)*self.size)
+        dv = np.concatenate(parts)
+        return np.cumsum(dv)
 
 
 def patientload(mass, s):
@@ -184,7 +160,7 @@ def shearforce(length, loads, supports=None):
         raise ValueError("'loads' is not a Load or a list of Loads")
     s1, s2 = _supcheck(length, supports)
     # New calculation with arrays...
-    V = np.sum(np.array([ld.shear(length) for ld in loads]), axis=0)
+    V = np.sum(np.array([ld.shear(length+1) for ld in loads]), axis=0)
     # Moment balance around s1
     if s2:
         moment = np.sum(V[:s1][::-1]*np.arange(-1, -(s1+1), -1))

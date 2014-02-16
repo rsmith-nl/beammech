@@ -38,29 +38,31 @@ def xsecprops():
     B = 400.0
     H = 40.0
     h = H-4
-    I = np.ones(L)*B*(H**3-h**3)/12.0
-    GA = np.ones(L)*(4350*2*H)+(B*h*8)
-    htop = np.ones(L)*20
-    hbot = np.ones(L)*-20
+    Lv = L+1
+    I = np.ones(Lv)*B*(H**3-h**3)/12.0
+    GA = np.ones(Lv)*(4350*2*H)+(B*h*8)
+    htop = np.ones(Lv)*20
+    hbot = np.ones(Lv)*-20
     return I, GA, htop, hbot
 
 
 def loadcase1():
     '''Point load in the middle of a beam that is supported at both ends.'''
-    global E, L, F
+    #global E, L, F
     supports = (0, L)
     P = beammech.Load(F, L/2)
     # Calculate the shear force in the cross-section every [mm],
     # and the reaction forces at the supports.
     D, Ra, Rb = beammech.shearforce(L, P, supports)
+    print D[0], D[L/2], D[L]
     # Create cross section properties arrays
     props = xsecprops()
     # Calculate the load case without shear deflection.
     M, y, t, b = beammech.loadcase(D, E, props, supports, False)
     print 'Loadcase 1, {}'.format(P)
     print 'Deflection under pure bending [beammech]: {:.2f} mm.'.format(y[500])
-    #st = 'Deflection under pure bending [formula]: {:.2f} mm.'
-    #print st.format(F*L**3/(48*res[0]*E))
+    st = 'Deflection under pure bending [formula]: {:.2f} mm.'
+    print st.format(-F*L**3/(48*props[0][0]*E))
     # Calculate the load case with shear deflection.
     M, y, t, b = beammech.loadcase(D, E, props, supports)
     st = 'Deflection under pure bending and shear [beammech]: {:.2f} mm.\n'
