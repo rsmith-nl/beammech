@@ -27,8 +27,8 @@
 "Module for simple stiffness and strength calculations of beams."
 
 from __future__ import division, print_function
-import math
 import numpy as np
+import math
 
 __version__ = '$Revision$'[11:-2]
 
@@ -49,25 +49,34 @@ class Load(object):
         return "point load of {} N @ {} mm.".format(self.size, self.pos)
 
     def moment(self, pos):
-        '''Returns the bending moment the load exerts at pos.
+        pass
+#        '''Returns the bending moment the load exerts at pos.
+#
+#        :param pos: position to calculate the moment from
+#        :returns: the moment w.r.t. pos
+#        '''
+#        return (self.pos-pos)*self.size
 
-        :param pos: position to calculate the moment from
-        :returns: the moment w.r.t. pos
+    def shear(self, length):
+        '''Return the contribution of the load to the shear.
+
+        :param length: length of the array to return
+        :returns: array that contains the contribution of this load.
         '''
-        return (self.pos-pos)*self.size
-
-    def shear(self, V):
-        '''Adds the contribution of the load to the shear V.
-
-        :param V: shear force array
-        '''
-        V[self.pos:] += self.size
+        rv = np.zeros(length)
+        rv[self.pos:] = self.size
+        return rv
 
 
 class DistLoad(Load):
     '''Evenly distributed load.'''
 
     def __init__(self, size, pos):
+        '''Create an evenly distributed load.
+
+        :param size: force in Newtons.
+        :param pos: 2-tuple containing the borders of the distributed load.
+        '''
         self.start = int(min(pos))
         self.end = int(max(pos))
         Load.__init__(self, size, float(self.start+self.end)/2)
@@ -77,21 +86,14 @@ class DistLoad(Load):
         return r.format(self.size, self.start, self.end)
 
     def moment(self, pos):
-        if pos <= self.start or pos >= self.end:
-            return Load.moment(self, pos)
-        left = float(pos-self.start)
-        right = float(self.end-pos)
-        length = float(self.end-self.start)
-        return (left**2-right**2)*self.size/(2*length)
+        pass
 
-    def shear(self, pos):
-        if pos <= self.start:
-            return 0.0
-        if pos >= self.end:
-            return self.size
-        extent = float(self.end - self.start)
-        offs = float(pos - self.start)
-        return self.size*offs/extent
+    def shear(self, length):
+        rem = length - self.end - 1
+        parts = (np.zeros(self.start-1),
+                 np.linspace(0, self.size, self.end-self.start+1),
+                 np.ones(rem)*self.size)
+        return np.concatenate(parts)
 
 
 class TriangleLoad(DistLoad):
@@ -118,8 +120,9 @@ class TriangleLoad(DistLoad):
         return r.format(direction, self.size, self.start, self.end)
 
     def moment(self, pos):
-        d = self.start-pos
-        return sum([(d+i+0.5)*self.V[i] for i in xrange(0, len(self.V))])
+        pass
+#        d = self.start-pos
+#        return sum([(d+i+0.5)*self.V[i] for i in xrange(0, len(self.V))])
 
     def shear(self, pos):
         if pos < self.start:
@@ -162,10 +165,9 @@ def shearforce(length, loads, supports=None):
     Load R1 and either Load R2 for a simple support or reaction moment
     R1 when clamped.
 
-    Arguments:
-    length -- length of the product in millimeters.
-    loads -- list of Loads.
-    supports -- a 2-tuple of the location in mm of the supports, or
+    :param length: length of the product in millimeters.
+    :param loads: list of Loads.
+    :param supports: a 2-tuple of the location in mm of the supports, or
     None if the beam is clamped at x=0.
     '''
     length = int(length)
@@ -181,23 +183,21 @@ def shearforce(length, loads, supports=None):
     else:
         raise ValueError("'loads' is not a Load or a list of Loads")
     s1, s2 = _supcheck(length, supports)
+    # New calculation with arrays...
+    V = np.sum(np.array([ld.shear(length) for ld in loads]), axis=0)
     # Moment balance around s1
-    moments = sum([ld.moment(s1) for ld in loads])
     if s2:
-        R2 = Load(-moments/(s2-s1), s2)
+        moment = np.sum(V[:s1][::-1]*np.arange(-1, -(s1+1), -1))
+        moment += np.sum(V[s1+1:]*np.arange(1, len(V)-s1))
+        R2 = Load(-moment/(s2-s1), s2)
         loads.append(R2)
     else:
-        R2 = moments
+        R2 = moment
     # Force equilibrium
     R1 = Load(-sum([ld.size for ld in loads]), s1)
     loads.append(R1)
-    xvals = range(length)
-    contribs = []
-    for ld in loads:
-        contribs.append([ld.shear(x) for x in xvals])
-    rv = map(sum, zip(*contribs))  # pylint: disable=W0141
-    rv.append(0.0)
-    return (rv, R1, R2)
+    V = np.sum(np.array([ld.shear(length) for ld in loads]), axis=0)
+    return V, R1, R2
 
 
 def _supcheck(length, spts):
@@ -222,18 +222,19 @@ def _align(src, s1, s2):
     '''
     if s2 is None:
         return src
-    anchor = s1
     # First, translate the whole list so that the value at the
     # index anchor is zero.
-    translated = [src[i]-src[anchor] for i in range(len(src))]
+    translated = src - src[s1]
     # Then rotate around the anchor so that the deflection at the other
     # support is also 0.
-    delta = translated[s2]/math.fabs(s1-s2)
-    rv = [translated[i]-delta*(i-anchor) for i in range(len(src))]
+    delta = -translated[s2]/math.fabs(s1-s2)
+    slope = np.concatenate((np.arange(-s1, 1, 1),
+                            np.arange(1, len(src)-s1)))*delta
+    rv = translated + slope
     return rv
 
 
-def loadcase(D, E, xsecprops, supports=None, shear=True, strain=False):
+def loadcase(D, E, props, supports=None, shear=True, strain=False):
     '''Calculates a loadcase.
 
     Returns a tuple of four lists containing the bending moment,
@@ -242,13 +243,11 @@ def loadcase(D, E, xsecprops, supports=None, shear=True, strain=False):
 
     :param D: List of shear force values along the length of the beam.
     :param E: Young's Modulus of the homogenized beam.
-    :param xsecprops: function that takes a single position argument and
-    returns a four-tuple (I, GA, etop, ebot) of the cross-section at that
-    position. Alternatively, it should be a list or tuple of the aforementioned
-    four-tuples. The I is the second area moment of the homogenized
-    cross-section in mm⁴. GA is the shear stiffness in N. The e* values are
-    the distance from the neutral line of the cross-section to the top and
-    bottom of the material in mm respectively. The latter should be negative.
+    :param props: a four-tuple of arrays (I, GA, etop, ebot). The I is the
+    second area moment of the homogenized cross-section in mm⁴. GA is the
+    shear stiffness in N. The e* values are the distance from the neutral line
+    of the cross-section to the top and bottom of the material in mm
+    respectively. The latter should be negative.
     :param supports: A list of positions of the two supports, or None of
     the beam is clamped at x=0.
     :param shear: Indicates wether shear deflection should be taken into
@@ -259,23 +258,18 @@ def loadcase(D, E, xsecprops, supports=None, shear=True, strain=False):
     s1, s2 = _supcheck(len(D), supports)
     M = np.cumsum(D)
     if s2 is None:
-        mr = M[-1]
-        M = [j-mr for j in M]
-    xvals = range(len(D))
-    if isinstance(xsecprops, (list, tuple)):
-        I, GA, etop, ebot = zip(*xsecprops)
-    else:
-        I, GA, etop, ebot = zip(*[xsecprops(x) for x in xvals])
-    top = [-M[x]*etop[x]/I[x] for x in xvals]
-    bottom = [-M[x]*ebot[x]/I[x] for x in xvals]
+        M -= M[-1]
+    I, GA, etop, ebot = props
+    top = -M*etop/I
+    bottom = -M*ebot/I
     if strain:
-        top = [x/E for x in top]
-        bottom = [x/E for x in bottom]
-    ddy_b = [M[x]/(E*I[x]) for x in xvals]
+        top /= E
+        bottom /= E
+    ddy_b = M/(E*I)
     dy_b = np.cumsum(ddy_b)
     if shear:
-        dy_sh = [-1.5*D[x]/GA[x] for x in xvals]
-        dy_tot = [i+j for i, j in zip(dy_b, dy_sh)]
+        dy_sh = -1.5*D/GA
+        dy_tot = dy_b + dy_sh
     else:
         dy_tot = dy_b
     y_tot = np.cumsum(dy_tot)
@@ -283,7 +277,7 @@ def loadcase(D, E, xsecprops, supports=None, shear=True, strain=False):
     return (M, y_tot, top, bottom)
 
 
-def calculate(length, loads, E, xsecprops, supports=None, shear=True):
+def calculate(length, loads, E, props, supports=None, shear=True):
     """Convenience function to combine the whole calculation.
 
     :length: The length of the beam in mm.
@@ -298,5 +292,5 @@ def calculate(length, loads, E, xsecprops, supports=None, shear=True):
     deflection is to be taken into account.
     """
     D, R1, R2 = shearforce(length, loads, supports)
-    M, y, st, sb = loadcase(D, E, xsecprops, supports, shear)
+    M, y, st, sb = loadcase(D, E, props, supports, shear)
     return D, M, y, st, sb, R1, R2
