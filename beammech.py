@@ -26,7 +26,9 @@
 
 "Module for simple stiffness and strength calculations of beams."
 
+from __future__ import division, print_function
 import math
+import numpy as np
 
 __version__ = '$Revision$'[11:-2]
 
@@ -196,15 +198,6 @@ def shearforce(length, loads, supports=None):
     return (rv, R1, R2)
 
 
-def _integrate(src):
-    '''Integrates a list of values. Does not use integration constants!
-    '''
-    rv = [0.0]
-    for i in range(len(src)-1):
-        rv.append(rv[-1]+src[i])
-    return rv
-
-
 def _supcheck(length, spts):
     '''Check the supports argument.'''
     if spts is None:
@@ -262,7 +255,7 @@ def loadcase(D, E, xsecprops, supports=None, shear=True, strain=False):
     bottom surfaces. False by default.
     '''
     s1, s2 = _supcheck(len(D), supports)
-    M = _integrate(D)
+    M = np.cumsum(D)
     if s2 is None:
         mr = M[-1]
         M = [j-mr for j in M]
@@ -277,13 +270,13 @@ def loadcase(D, E, xsecprops, supports=None, shear=True, strain=False):
         top = [x/E for x in top]
         bottom = [x/E for x in bottom]
     ddy_b = [M[x]/(E*I[x]) for x in xvals]
-    dy_b = _integrate(ddy_b)
+    dy_b = np.cumsum(ddy_b)
     if shear:
         dy_sh = [-1.5*D[x]/GA[x] for x in xvals]
         dy_tot = [i+j for i, j in zip(dy_b, dy_sh)]
     else:
         dy_tot = dy_b
-    y_tot = _integrate(dy_tot)
+    y_tot = np.cumsum(dy_tot)
     y_tot = _align(y_tot, s1, s2)
     return (M, y_tot, top, bottom)
 
