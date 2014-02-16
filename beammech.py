@@ -30,6 +30,7 @@ import math
 
 __version__ = '$Revision$'[11:-2]
 
+
 class Load(object):
     '''Point load.'''
 
@@ -62,6 +63,7 @@ class Load(object):
             return 0.0
         return self.size
 
+
 class DistLoad(Load):
     '''Evenly distributed load.'''
 
@@ -93,6 +95,7 @@ class DistLoad(Load):
         extent = float(self.end - self.start)
         offs = float(pos - self.start)
         return self.size*offs/extent
+
 
 class TriangleLoad(DistLoad):
     '''Linearly rising distributed load.'''
@@ -141,12 +144,12 @@ def patientload(mass, s):
     s -- location of the feet in mm. Head lies at s+1900.
     '''
     f = -kg2N(mass)
-    fractions = [(0.148*f, (s + 0, s + 450)), # l. legs, 14.7% from 0 to 450 mm.
-                 (0.222*f, (s + 450, s + 1000)), # upper legs
-                 (0.074*f, (s + 1000, s + 1180)), # hands
-                 (0.408*f, (s + 1000, s + 1700)), # torso
-                 (0.074*f, (s + 1200, s + 1700)), # arms
-                 (0.074*f, (s + 1220, s + 1900))] #head
+    fractions = [(0.148*f, (s + 0, s + 450)),  # l. legs, 14.7% from 0--450 mm
+                 (0.222*f, (s + 450, s + 1000)),  # upper legs
+                 (0.074*f, (s + 1000, s + 1180)),  # hands
+                 (0.408*f, (s + 1000, s + 1700)),  # torso
+                 (0.074*f, (s + 1200, s + 1700)),  # arms
+                 (0.074*f, (s + 1220, s + 1900))]  # head
     return [DistLoad(i[0], i[1]) for i in fractions]
 
 
@@ -196,7 +199,7 @@ def shearforce(length, loads, supports=None):
     contribs = []
     for ld in loads:
         contribs.append([ld.shear(x) for x in xvals])
-    rv =  map(sum, zip(*contribs)) # pylint: disable=W0141
+    rv = map(sum, zip(*contribs))  # pylint: disable=W0141
     rv.append(0.0)
     return (rv, R1, R2)
 
@@ -214,7 +217,7 @@ def _integrate(src):
 
 def _supcheck(length, spts):
     '''Check the supports argument.'''
-    if spts == None:
+    if spts is None:
         return (0, None)
     if len(spts) != 2:
         raise ValueError('There must be two supports!')
@@ -269,7 +272,7 @@ def loadcase(D, E, xsecprops, supports=None, shear=True, strain=False):
     :param strain: Indicates wether strains should be reported at the top and
     bottom surfaces. False by default.
     '''
-    s1, s2 = _supcheck(D, supports)
+    s1, s2 = _supcheck(len(D), supports)
     M = _integrate(D)
     if s2 is None:
         mr = M[-1]
