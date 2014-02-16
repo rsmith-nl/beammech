@@ -39,9 +39,8 @@ class Load(object):
     def __init__(self, size, pos):
         '''Create a point load.
 
-        Arguments
-        size -- force in Newtons.
-        pos -- distance of the force from the origin in mm.
+        :param size: force in Newtons.
+        :param pos: distance of the force from the origin in mm.
         '''
         self.size = float(size)
         self.pos = int(pos)
@@ -51,15 +50,18 @@ class Load(object):
 
     def moment(self, pos):
         '''Returns the bending moment the load exerts at pos.
+
+        :param pos: position to calculate the moment from
+        :returns: the moment w.r.t. pos
         '''
         return (self.pos-pos)*self.size
 
-    def shear(self, pos):
-        '''Returns the contribution of the load to the shear at pos.
+    def shear(self, V):
+        '''Adds the contribution of the load to the shear V.
+
+        :param V: shear force array
         '''
-        if pos < self.pos:
-            return 0.0
-        return self.size
+        V[self.pos:] += self.size
 
 
 class DistLoad(Load):
