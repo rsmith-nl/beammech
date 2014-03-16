@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright © 2012,2013 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
+# Copyright © 2012-2014 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
 # $Date$
 #
 # Redistribution and use in source and binary forms, with or without
@@ -12,19 +12,18 @@
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-# SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS “AS IS” AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN
+# NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
+# OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+# EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"Module for simple stiffness and strength calculations of beams."
+"""Module for simple stiffness and strength calculations of beams."""
 
 from __future__ import division, print_function
 import numpy as np
@@ -34,40 +33,45 @@ __version__ = '$Revision$'[11:-2]
 
 
 class Load(object):
-    '''Point load.'''
+    """Point load."""
 
     def __init__(self, size, pos):
-        '''Create a point load.
+        """Create a point load.
 
         :param size: force in Newtons.
         :param pos: distance of the force from the origin in mm.
-        '''
+        """
         self.size = float(size)
         self.pos = int(pos)
 
     def __str__(self):
         return "point load of {} N @ {} mm.".format(self.size, self.pos)
 
+    def moment(self, pos):
+        """Returns the bending moment the load exerts at pos.
+        """
+        return (self.pos-pos)*self.size
+
     def shear(self, length):
-        '''Return the contribution of the load to the shear.
+        """Return the contribution of the load to the shear.
 
         :param length: length of the array to return
         :returns: array that contains the contribution of this load.
-        '''
+        """
         rv = np.zeros(length+1)
         rv[self.pos:] = self.size
         return rv
 
 
 class DistLoad(Load):
-    '''Evenly distributed load.'''
+    """Evenly distributed load."""
 
     def __init__(self, size, pos):
-        '''Create an evenly distributed load.
+        """Create an evenly distributed load.
 
         :param size: force in Newtons.
         :param pos: 2-tuple containing the borders of the distributed load.
-        '''
+        """
         self.start = int(min(pos))
         self.end = int(max(pos))
         Load.__init__(self, size, float(self.start+self.end)/2)
@@ -75,6 +79,14 @@ class DistLoad(Load):
     def __str__(self):
         r = "constant distributed load of {} N @ {}--{} mm."
         return r.format(self.size, self.start, self.end)
+
+    def moment(self, pos):
+        if pos <= self.start or pos >= self.end:
+            return Load.moment(self, pos)
+        left = float(pos-self.start)
+        right = float(self.end-pos)
+        length = float(self.end-self.start)
+        return (left**2-right**2)*self.size/(2*length)
 
     def shear(self, length):
         rem = length + 1 - self.end
@@ -86,7 +98,7 @@ class DistLoad(Load):
 
 
 class TriangleLoad(DistLoad):
-    '''Linearly rising distributed load.'''
+    """Linearly rising distributed load."""
 
     def __init__(self, size, pos):
         DistLoad.__init__(self, size, pos)
@@ -100,6 +112,11 @@ class TriangleLoad(DistLoad):
             direction = 'descending'
         return r.format(direction, self.size, self.start, self.end)
 
+    def moment(self, pos):
+        #d = self.start-pos
+        #return sum([(d+i+0.5)*self.V[i] for i in xrange(0, len(self.V))])
+        pass
+
     def shear(self, length):
         rem = length + 1 - self.end
         parts = (np.zeros(self.start),
@@ -110,13 +127,13 @@ class TriangleLoad(DistLoad):
 
 
 def patientload(mass, s):
-    '''Returns a list of DistLoads that represent a patient
+    """Returns a list of DistLoads that represent a patient
     load according to IEC 60601 specs.
 
     Argument:
     mass -- mass of the patient in kg.
     s -- location of the feet in mm. Head lies at s+1900.
-    '''
+    """
     f = -kg2N(mass)
     fractions = [(0.148*f, (s + 0, s + 450)),  # l. legs, 14.7% from 0--450 mm
                  (0.222*f, (s + 450, s + 1000)),  # upper legs
@@ -128,24 +145,27 @@ def patientload(mass, s):
 
 
 def kg2N(k):
-    '''Converts kilograms to Newtons.'''
+    """Converts kilograms to Newtons.
+
+    :param k: string or number in kilograms
+    :returns: a float containing the equivalent of k in N.
+    """
     return float(k)*9.81
 
 
 def shearforce(length, loads, supports=None):
-    '''Calculates a list of shear forces based on a list of loads. The
-    returned list has a resolution of 1 mm per list unit. The shear
-    force at index p exists over the domain from p to p+1.
-
-    Returns a 3-tuple consisting of a list of shear values, reaction
-    Load R1 and either Load R2 for a simple support or reaction moment
-    R1 when clamped.
+    """Calculates a list of shear force element based on a list of loads. The
+    returned list has a resolution of 1 mm per element. The shear
+    force element at index p goes from from nodes p to p+1.
 
     :param length: length of the product in millimeters.
     :param loads: list of Loads.
     :param supports: a 2-tuple of the location in mm of the supports, or
     None if the beam is clamped at x=0.
-    '''
+    :returns: a 3-tuple consisting of a list of shear values, reaction
+    Load R1 and either Load R2 for a simple support or reaction moment
+    R1 when clamped.
+    """
     length = int(length)
     if length < 1:
         raise ValueError('Beam of negative length is impossible.')
@@ -159,16 +179,13 @@ def shearforce(length, loads, supports=None):
     else:
         raise ValueError("'loads' is not a Load or a list of Loads")
     s1, s2 = _supcheck(length, supports)
-    # New calculation with arrays...
-    V = np.sum(np.array([ld.shear(length+1) for ld in loads]), axis=0)
     # Moment balance around s1
+    moment = sum([ld.moment(s1) for ld in loads])
     if s2:
-        moment = np.sum(V[:s1][::-1]*np.arange(-1, -(s1+1), -1))
-        moment += np.sum(V[s1+1:]*np.arange(1, len(V)-s1))
         R2 = Load(-moment/(s2-s1), s2)
         loads.append(R2)
-    else:
-        R2 = moment
+    else:  # clamped at x = 0
+        R2 = -moment
     # Force equilibrium
     R1 = Load(-sum([ld.size for ld in loads]), s1)
     loads.append(R1)
@@ -177,7 +194,12 @@ def shearforce(length, loads, supports=None):
 
 
 def _supcheck(length, spts):
-    '''Check the supports argument.'''
+    """Check the supports argument.
+
+    :param length: length of the beam
+    :param spts: a 2-tuple of support positions or None
+    :returns: a valid 2-tuple of supports
+    """
     if spts is None:
         return (0, None)
     if len(spts) != 2:
@@ -192,10 +214,15 @@ def _supcheck(length, spts):
     return rv
 
 
-def _align(src, s1, s2):
-    '''In the situation with two supports, transform a list of values such
+def align(src, s1, s2):
+    """In the situation with two supports, transform a list of values such
     that the value at the supports is zero.
-    '''
+
+    :param src: a numpy array of values
+    :param s1: location where the first support is
+    :param s2: location of the second support or None
+    :returns: a transformed src whose values at indiced s1 and s2 is 0
+    """
     if s2 is None:
         return src
     # First, translate the whole list so that the value at the
@@ -211,11 +238,7 @@ def _align(src, s1, s2):
 
 
 def loadcase(D, E, props, supports=None, shear=True, strain=False):
-    '''Calculates a loadcase.
-
-    Returns a tuple of four lists containing the bending moment,
-    deflection, stress (or strain) at the top and the bottom of the
-    cross-section.
+    """Calculates a loadcase.
 
     :param D: List of shear force values along the length of the beam.
     :param E: Young's Modulus of the homogenized beam.
@@ -230,12 +253,17 @@ def loadcase(D, E, props, supports=None, shear=True, strain=False):
     account. True by default.
     :param strain: Indicates wether strains should be reported at the top and
     bottom surfaces. False by default.
-    '''
+    :returns: a tuple of four lists containing the bending moment,
+    deflection, stress (or strain) at the top and the bottom of the
+    cross-section.
+    """
     s1, s2 = _supcheck(len(D), supports)
     M = np.cumsum(D)
     if s2 is None:
         M -= M[-1]
     I, GA, etop, ebot = props
+    I, GA = np.array(I), np.array(GA)
+    etop, ebot = np.array(etop), np.array(ebot)
     top = -M*etop/I
     bottom = -M*ebot/I
     if strain:
@@ -249,7 +277,7 @@ def loadcase(D, E, props, supports=None, shear=True, strain=False):
     else:
         dy_tot = dy_b
     y_tot = np.cumsum(dy_tot)
-    y_tot = _align(y_tot, s1, s2)
+    y_tot = align(y_tot, s1, s2)
     return (M, y_tot, top, bottom)
 
 
