@@ -23,7 +23,7 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Module for simple stiffness and strength calculations of beams."""
+"""Module for stiffness and strength calculations of beams."""
 
 from __future__ import division, print_function
 import numpy as np
@@ -80,14 +80,6 @@ class DistLoad(Load):
         r = "constant distributed load of {} N @ {}--{} mm."
         return r.format(self.size, self.start, self.end)
 
-    def moment(self, pos):
-        if pos <= self.start or pos >= self.end:
-            return Load.moment(self, pos)
-        left = float(pos-self.start)
-        right = float(self.end-pos)
-        length = float(self.end-self.start)
-        return (left**2-right**2)*self.size/(2*length)
-
     def shear(self, length):
         rem = length + 1 - self.end
         d = self.end-self.start
@@ -111,11 +103,6 @@ class TriangleLoad(DistLoad):
         else:
             direction = 'descending'
         return r.format(direction, self.size, self.start, self.end)
-
-    def moment(self, pos):
-        #d = self.start-pos
-        #return sum([(d+i+0.5)*self.V[i] for i in xrange(0, len(self.V))])
-        pass
 
     def shear(self, length):
         rem = length + 1 - self.end
