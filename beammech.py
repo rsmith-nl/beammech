@@ -94,7 +94,9 @@ class TriangleLoad(DistLoad):
 
     def __init__(self, size, pos):
         DistLoad.__init__(self, size, pos)
-        self.pos = min(pos)+2.0*(max(pos)-min(pos))/3.0
+        length = max(pos)-min(pos)
+        self.pos = min(pos)+2.0*length/3.0
+        self.q = 2*self.size/length
 
     def __str__(self):
         r = "linearly {} distributed load of {} N @ {}--{} mm."
@@ -107,8 +109,8 @@ class TriangleLoad(DistLoad):
     def shear(self, length):
         rem = length + 1 - self.end
         parts = (np.zeros(self.start),
-                 np.linspace(0, self.size, self.end-self.start),
-                 np.zeros(rem)*self.size)
+                 np.linspace(0, self.q, self.end-self.start),
+                 np.ones(rem)*self.q)
         dv = np.concatenate(parts)
         return np.cumsum(dv)
 
@@ -117,9 +119,9 @@ def patientload(mass, s):
     """Returns a list of DistLoads that represent a patient
     load according to IEC 60601 specs.
 
-    Argument:
-    mass -- mass of the patient in kg.
-    s -- location of the feet in mm. Head lies at s+1900.
+    :param mass: mass of the patient in kg.
+    :param s: location of the feet in mm, head lies at s+1900
+    :returns: a list of Loads
     """
     f = -kg2N(mass)
     fractions = [(0.148*f, (s + 0, s + 450)),  # l. legs, 14.7% from 0--450 mm
