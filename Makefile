@@ -1,13 +1,22 @@
-.PHONY: all install dist clean backup deinstall check
+.PHONY: all install tests dist clean backup deinstall check
 .SUFFIXES: .ps .pdf .py
 
-#beginskip
 MOD = beammech
 SRCS = ${MOD}.py
 
-all: .git/hooks/post-commit
-#endskip
+all::
+	@echo 'you can use the following commands:'
+	@echo '* tests'
+	@echo '* install'
+	@echo '* deinstall'
+	@echo '* dist'
+	@echo '* clean'
+	@echo '* check'
+
 PYSITE!=python -c 'import site; print site.getsitepackages()[0]'
+
+tests::
+	@python tests/general.py
 
 install: setup.py ${MOD}.py
 	@if [ `id -u` != 0 ]; then \
@@ -25,11 +34,7 @@ deinstall::
 	fi
 	rm -f ${PYSITE}/${MOD}.py
 
-#beginskip
 dist:
-# Make simplified makefile.
-	mv Makefile Makefile.org
-	awk -f tools/makemakefile.awk Makefile.org >Makefile
 # Create distribution file. Use zip format to make deployment easier on windoze.
 	python setup.py sdist --format=zip
 	mv Makefile.org Makefile
@@ -42,13 +47,5 @@ clean::
 	rm -rf dist build backup-*.tar.gz *.py[co] MANIFEST tests/*.d
 #	rm -f port/Makefile port/distinfo
 
-backup:
-# Generate a full backup.
-	sh tools/genbackup
-
 check: ${MOD}.py .IGNORE
 	pylint --rcfile=tools/pylintrc ${SRCS}
-
-.git/hooks/post-commit: tools/post-commit
-	install -m 755 $> $@
-#endskip
