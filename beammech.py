@@ -133,15 +133,6 @@ def patientload(mass, s):
     return [DistLoad(i[0], i[1]) for i in fractions]
 
 
-def kg2N(k):
-    """Converts kilograms to Newtons.
-
-    :param k: string or number in kilograms
-    :returns: a float containing the equivalent of k in N.
-    """
-    return float(k)*9.81
-
-
 def shearforce(length, loads, supports=None):
     """Calculates a list of shear force element based on a list of loads. The
     returned list has a resolution of 1 mm per element. The shear
@@ -180,50 +171,6 @@ def shearforce(length, loads, supports=None):
     loads.append(R1)
     V = np.sum(np.array([ld.shear(length) for ld in loads]), axis=0)
     return V, R1, R2
-
-
-def _supcheck(length, spts):
-    """Check the supports argument.
-
-    :param length: length of the beam
-    :param spts: a 2-tuple of support positions or None
-    :returns: a valid 2-tuple of supports
-    """
-    if spts is None:
-        return (0, None)
-    if len(spts) != 2:
-        raise ValueError('There must be two supports!')
-    if isinstance(spts[0], Load):
-        t = [spts[0].pos, spts[1].pos]
-    else:
-        t = [int(spts[0]), int(spts[1])]
-    rv = (min(t), max(t))
-    if rv[0] < 0 or rv[1] > length:
-        raise ValueError('Support(s) outside the length of the beam.')
-    return rv
-
-
-def align(src, s1, s2):
-    """In the situation with two supports, transform a list of values such
-    that the value at the supports is zero.
-
-    :param src: a numpy array of values
-    :param s1: location where the first support is
-    :param s2: location of the second support or None
-    :returns: a transformed src whose values at indiced s1 and s2 is 0
-    """
-    if s2 is None:
-        return src
-    # First, translate the whole list so that the value at the
-    # index anchor is zero.
-    translated = src - src[s1]
-    # Then rotate around the anchor so that the deflection at the other
-    # support is also 0.
-    delta = -translated[s2]/math.fabs(s1-s2)
-    slope = np.concatenate((np.arange(-s1, 1, 1),
-                            np.arange(1, len(src)-s1)))*delta
-    rv = translated + slope
-    return rv
 
 
 def loadcase(D, E, props, supports=None, shear=True, strain=False):
@@ -287,3 +234,56 @@ def calculate(length, loads, E, props, supports=None, shear=True):
     D, R1, R2 = shearforce(length, loads, supports)
     M, y, st, sb = loadcase(D, E, props, supports, shear)
     return D, M, y, st, sb, R1, R2
+
+
+def kg2N(k):
+    """Converts kilograms to Newtons.
+
+    :param k: string or number in kilograms
+    :returns: a float containing the equivalent of k in N.
+    """
+    return float(k)*9.81
+
+
+def align(src, s1, s2):
+    """In the situation with two supports, transform a list of values such
+    that the value at the supports is zero.
+
+    :param src: a numpy array of values
+    :param s1: location where the first support is
+    :param s2: location of the second support or None
+    :returns: a transformed src whose values at indiced s1 and s2 is 0
+    """
+    if s2 is None:
+        return src
+    # First, translate the whole list so that the value at the
+    # index anchor is zero.
+    translated = src - src[s1]
+    # Then rotate around the anchor so that the deflection at the other
+    # support is also 0.
+    delta = -translated[s2]/math.fabs(s1-s2)
+    slope = np.concatenate((np.arange(-s1, 1, 1),
+                            np.arange(1, len(src)-s1)))*delta
+    rv = translated + slope
+    return rv
+
+
+def _supcheck(length, spts):
+    """Check the supports argument.
+
+    :param length: length of the beam
+    :param spts: a 2-tuple of support positions or None
+    :returns: a valid 2-tuple of supports
+    """
+    if spts is None:
+        return (0, None)
+    if len(spts) != 2:
+        raise ValueError('There must be two supports!')
+    if isinstance(spts[0], Load):
+        t = [spts[0].pos, spts[1].pos]
+    else:
+        t = [int(spts[0]), int(spts[1])]
+    rv = (min(t), max(t))
+    if rv[0] < 0 or rv[1] > length:
+        raise ValueError('Support(s) outside the length of the beam.')
+    return rv
