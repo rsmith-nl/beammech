@@ -84,9 +84,19 @@ def lc5():
     compare(lc5.__doc__, y[int(0.519*L)], 0.01304*P*L**3/(E*I))
 
 
+def lc6():
+    """Ends supported beam with three equidistant point loads"""
+    supports = (0, L)
+    loads = [bm.Load(P, L/4), bm.Load(P, L/2), bm.Load(P, 3*L/4)]
+    D, R1, _ = bm.shearforce(L, loads, supports)
+    _, y, _, _ = bm.loadcase(D, E, props, supports=supports, shear=False)
+    compare(lc6.__doc__, y[int(L/2)], 19*P*L**3/(384*E*I))
+
+
 if __name__ == '__main__':
     lc1()
     lc2()
     lc3()
     lc4()
     lc5()
+    lc6()
