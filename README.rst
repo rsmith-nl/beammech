@@ -3,7 +3,7 @@ Introduction
 
 Over the years I've written several programs in languages from Perl to Lua to
 solve the differential equations for pure bending y'' = M/(E·I) and shear
-y' = α·V/(G·A) of beams. The solution is determined by integration. 
+y' = α·V/(G·A) of beams. The solution is determined by integration.
 
 For the simple cases of pure bending (where E·I is constant over the length of
 the beam, and where shear deformation is ignored), the solution can be found
@@ -11,11 +11,10 @@ in reference books. Combining them for different loads can be rather
 cumbersome,though.
 
 However, in practice I usually deal with cases where E·I (and G·A) vary along
-the length of the beam, where there may be multiple loads presen and where
-shear deflection cannot be ignored. So I had to calculate my own
-solutions. These programs all followed the same pattern. So I decided to
-separate the re-usable parts and put them in a module. That was the birth of
-beammech.py.
+the length of the beam, where there may be multiple loads present and where
+shear deflection cannot be ignored. So I had to calculate my own solutions.
+These programs all followed the same pattern. So I decided to separate the
+re-usable parts and put them in a module. That was the birth of beammech.py.
 
 This software was written with metric units in mind. So forces are in N, and
 lengths in mm. A standard Cartesian coordinate system is used, with the x-axis
@@ -49,6 +48,6 @@ bending moment, the assumption is made that the bending moment at 0 (which is
 the left end of the beam) is 0.
 
 This solution strategy only allows for two supports, resulting in statically
-determined cases. Statically indetermined cases can be calculated by adding
+determined cases. Statically undetermined cases can be calculated by adding
 the additional supports as loads, and manipulating them until the deflection
 at the load points is 0.
