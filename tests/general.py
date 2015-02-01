@@ -43,7 +43,8 @@ def lc1():
     G = 28
     A = B*h
     problem = {'length': L, 'EI': np.ones(L+1)*E*I, 'GA': np.ones(L+1)*G*A,
-            'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2}
+               'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
+               'shear': False}
     problem['loads'] = bm.Load(force=P, pos=L)
     bm.solve(problem)
     compare(lc1.__doc__, problem['y'][L], P*L**3/(3*E*I))
@@ -62,7 +63,8 @@ def lc2():
     G = 28
     A = B*h
     problem = {'length': L, 'EI': np.ones(L+1)*E*I, 'GA': np.ones(L+1)*G*A,
-            'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2}
+               'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
+               'shear': False}
     problem['loads'] = bm.DistLoad(force=P, start=0, end=L)
     bm.solve(problem)
     compare(lc2.__doc__, problem['y'][L], P*L**3/(8*E*I))
@@ -81,7 +83,7 @@ def lc3():
     A = B*h
     problem = {'length': L, 'EI': np.ones(L+1)*E*I, 'GA': np.ones(L+1)*G*A,
                'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'supports': (0, L)}
+               'supports': (0, L), 'shear': False}
     problem['loads'] = bm.DistLoad(force=P, start=0, end=L)
     bm.solve(problem)
     compare(lc3.__doc__, problem['y'][int(L/2)], 5*P*L**3/(384*E*I))
@@ -100,7 +102,7 @@ def lc4():
     A = B*h
     problem = {'length': L, 'EI': np.ones(L+1)*E*I, 'GA': np.ones(L+1)*G*A,
                'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'supports': (0, L)}
+               'supports': (0, L), 'shear': False}
     problem['loads'] = bm.Load(force=P, pos=L/2)
     bm.solve(problem)
     compare(lc4.__doc__, problem['y'][int(L/2)], P*L**3/(48*E*I))
@@ -128,7 +130,7 @@ def lc6():
     A = B*h
     problem = {'length': L, 'EI': np.ones(L+1)*E*I, 'GA': np.ones(L+1)*G*A,
                'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'supports': (0, L)}
+               'supports': (0, L), 'shear': False}
     problem['loads'] = [bm.Load(force=P, pos=L/4), bm.Load(force=P, pos=L/2),
                         bm.Load(force=P, pos=3*L/4)]
     bm.solve(problem)

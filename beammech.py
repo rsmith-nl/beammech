@@ -217,6 +217,19 @@ def _check_arrays(problem):
     return problem['EI'], problem['GA'], problem['top'], problem['bot']
 
 
+def _check_shear(problem):
+    """Check if the problem should incluse shear.
+
+    :param problem: dictionary containing the parameters of the problem
+    :returns: True or False
+    """
+    if 'shear' not in problem:
+        problem['shear'] = True
+    elif not isinstance(problem['shear'], bool):
+        raise ValueError("'shear' should be a boolean.")
+    return problem['shear']
+
+
 def patientload(**kwargs):
     """Returns a list of DistLoads that represent a patient
     load according to IEC 60601 specs.
@@ -251,6 +264,7 @@ def solve(problem):
     length, (s1, s2) = _check_length_supports(problem)
     loads = _check_loads(problem)
     EI, GA, top, bot = _check_arrays(problem)
+    shear = _check_shear(problem)
     moment = sum([ld.moment(s1) for ld in loads])
     if s2:
         R2 = Load(force=-moment/(s2-s1), pos=s2)
@@ -267,7 +281,8 @@ def solve(problem):
     ddy_b = M/EI
     etop, ebot = -top*ddy_b, -bot*ddy_b
     dy = np.cumsum(ddy_b)
-    dy += -1.5*D/GA  # shear
+    if shear:
+        dy += -1.5*D/GA  # shear
     y = np.cumsum(dy)
     if s2:
         # First, translate the whole list so that the value at the
