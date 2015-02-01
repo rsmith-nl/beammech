@@ -79,7 +79,7 @@ class DistLoad(Load):
         """
         size = _force(kwargs)
         self.start, self.end = _start_end(kwargs)
-        Load.__init__(self, size, float(self.start+self.end)/2)
+        Load.__init__(self, force=size, pos=float(self.start+self.end)/2)
 
     def __str__(self):
         r = "constant distributed load of {} N @ {}--{} mm."
@@ -178,7 +178,7 @@ def _check_length_supports(problem):
         problem['supports'] = s
     else:
         s = (0, None)
-    return (length, s)
+    return (problem['length'], s)
 
 
 def _check_loads(problem):
@@ -253,12 +253,12 @@ def solve(problem):
     EI, GA, top, bot = _check_arrays(problem)
     moment = sum([ld.moment(s1) for ld in loads])
     if s2:
-        R2 = Load(-moment/(s2-s1), s2)
+        R2 = Load(force=-moment/(s2-s1), pos=s2)
         loads.append(R2)
     else:  # clamped at x = 0
         R2 = -moment
     # Force equilibrium
-    R1 = Load(-sum([ld.size for ld in loads]), s1)
+    R1 = Load(force=-sum([ld.size for ld in loads]), pos=s1)
     loads.append(R1)
     D = np.sum(np.array([ld.shear(length) for ld in loads]), axis=0)
     M = np.cumsum(D)
@@ -280,6 +280,6 @@ def solve(problem):
                                 np.arange(1, len(y)-s1)))*delta
         dy += delta
         y = translated + slope
-    problem['D'], problem['M'] = M
+    problem['D'], problem['M'] = D, M
     problem['y'], problem['R'] = y, (R1, R2)
     problem['a'] = np.rad2deg(np.arctan(dy))
