@@ -3,3 +3,7 @@ tests/beammech.py
 *.pyc
 *.pyo
 backup-*
+MANIFEST
+dist/
+build/
+__pycache__/

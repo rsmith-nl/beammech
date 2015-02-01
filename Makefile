@@ -16,6 +16,9 @@ all::
 PYSITE!=python3 -B -c 'import site; print(site.getsitepackages()[0])'
 
 tests::
+	@echo Python 2
+	@python2 -B tests/general.py
+	@echo Python 3
 	@python3 -B tests/general.py
 
 install: setup.py ${MOD}.py
@@ -37,7 +40,6 @@ deinstall::
 dist:
 # Create distribution file. Use zip format to make deployment easier on windoze.
 	python3 -B setup.py sdist --format=zip
-	mv Makefile.org Makefile
 	rm -f MANIFEST
 
 clean::
