@@ -13,10 +13,10 @@ all::
 	@echo '* clean'
 	@echo '* check'
 
-PYSITE!=python3 -c 'import site; print(site.getsitepackages()[0])'
+PYSITE!=python3 -B -c 'import site; print(site.getsitepackages()[0])'
 
 tests::
-	@python3 tests/general.py
+	@python3 -B tests/general.py
 
 install: setup.py ${MOD}.py
 	@if [ `id -u` != 0 ]; then \
@@ -24,7 +24,7 @@ install: setup.py ${MOD}.py
 		exit 1; \
 	fi
 # Let Python do the install work.
-	python3 setup.py install
+	python3 -B setup.py install
 	rm -rf build
 
 deinstall::
@@ -36,7 +36,7 @@ deinstall::
 
 dist:
 # Create distribution file. Use zip format to make deployment easier on windoze.
-	python3 setup.py sdist --format=zip
+	python3 -B setup.py sdist --format=zip
 	mv Makefile.org Makefile
 	rm -f MANIFEST
 
