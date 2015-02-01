@@ -97,30 +97,30 @@ class DistLoad(Load):
 
 
 class TriangleLoad(DistLoad):
-   """Linearly rising distributed load."""
+    """Linearly rising distributed load."""
 
-   def __init__(self, **kwargs):
-       DistLoad.__init__(self, **kwargs)
-       length = abs(self.start - self.end)
-       pos = (self.start, self.end)
-       self.pos = round(min(pos)) + 2.0*length/3.0
-       self.q = 2*self.size/length
+    def __init__(self, **kwargs):
+        DistLoad.__init__(self, **kwargs)
+        length = abs(self.start - self.end)
+        pos = (self.start, self.end)
+        self.pos = round(min(pos)) + 2.0*length/3.0
+        self.q = 2*self.size/length
 
-   def __str__(self):
-       r = "linearly {} distributed load of {} N @ {}--{} mm."
-       if self.start < self.end:
-           direction = 'ascending'
-       else:
-           direction = 'descending'
-       return r.format(direction, self.size, self.start, self.end)
+    def __str__(self):
+        r = "linearly {} distributed load of {} N @ {}--{} mm."
+        if self.start < self.end:
+            direction = 'ascending'
+        else:
+            direction = 'descending'
+        return r.format(direction, self.size, self.start, self.end)
 
-   def shear(self, length):
-       rem = length + 1 - self.end
-       parts = (np.zeros(self.start),
-                np.linspace(0, self.q, self.end-self.start),
-                np.ones(rem)*self.q)
-       dv = np.concatenate(parts)
-       return np.cumsum(dv)
+    def shear(self, length):
+        rem = length + 1 - self.end
+        parts = (np.zeros(self.start),
+                 np.linspace(0, self.q, self.end-self.start),
+                 np.ones(rem)*self.q)
+        dv = np.concatenate(parts)
+        return np.cumsum(dv)
 
 
 def _force(kwargs):
@@ -148,7 +148,7 @@ def _start_end(kwargs):
         p = kwargs['pos']
         if not isinstance(p, tuple) and len(p) != 2:
             raise ValueError("'pos' should be a 2-tuple")
-        pos = (round(float(pos[0])), round(float(pos[1])))
+        pos = (round(float(kwargs['pos'][0])), round(float(kwargs['pos'][1])))
     elif 'start' in kwargs and 'end' in kwargs:
         pos = (round(float(kwargs['start'])), round(float(kwargs['end'])))
     else:
@@ -301,3 +301,4 @@ def solve(problem):
     problem['D'], problem['M'] = D, M
     problem['y'], problem['R'] = y, (R1, R2)
     problem['a'] = np.arctan(dy)
+    problem['etop'], problem['ebot'] = etop, ebot

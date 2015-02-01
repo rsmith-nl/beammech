@@ -50,6 +50,8 @@ def lc1():
     problem['loads'] = bm.Load(force=P, pos=L)
     bm.solve(problem)
     print(lc1.__doc__)
+    s = '- strain at clamped end; top {:.4g}, bottom {:.4g}'
+    print(s.format(problem['etop'][0], problem['ebot'][0]))
     compare('- end deflection', problem['y'][L], P*L**3/(3*E*I))
     compare('- end angle', problem['a'][L], P*L**2/(2*E*I))
 

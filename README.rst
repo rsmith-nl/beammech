@@ -152,6 +152,14 @@ are added;
     A numpy array containing angle between the tangent line of the beam and the
     x-axis in radians at each mm of the beam.
 
+'etop'
+    A numpy array containing the strain at the top of the cross-section at
+    each mm of the beam.
+
+'ebot'
+    A numpy array containing the strain at the bottom of the cross-section at
+    each mm of the beam.
+
 'R'
     If 'supports' was provided, R is a 2-tuple of the reaction forces at said
     supports. Else R[0] is the reaction force at the clamped x=0 and R[1] is
