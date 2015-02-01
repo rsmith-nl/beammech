@@ -30,7 +30,6 @@ summation (integration) is 1 mm, because that is a good match for the kind of
 problems I use it for.  And it makes the math simpler; A whole lot of
 divisions just disappear.
 
-
 Before we can solve the problem we need to define it.  This is done with a
 standard Python dictionary.  The length of the beam and the location of the
 supports are the initial parameters.
@@ -102,9 +101,11 @@ stiffness E·I, the shear stiffness G·A and the distance from the neutral line
 to the top and bottom of the beam at each mm along the length of the beam.
 Calculating these properties can be difficult for beams made out of different
 materials (e.g. sandwich structures).  For every point in the length the
-products E·I and G·A are gathered in a numpy array and added to the problem
-dictionary.  In the example below a constant cross-section is used for
-simplicity.
+products E·I, G·A and the top- and bottom distance from the neutral line are
+gathered in a numpy array and added to the problem dictionary.  In the example
+below a constant rectangular cross-section is used for simplicity.  But it is
+in the composition of these arrays that you can construct basically any
+variation in beam geometry.
 
 .. code-block:: python
 
@@ -149,18 +150,9 @@ are added;
 
 'a'
     A numpy array containing angle between the tangent line of the beam and the
-    x-axis at each mm of the beam.
+    x-axis in degrees at each mm of the beam.
 
 'R'
     If 'supports' was provided, R is a 2-tuple of the reaction forces at said
-    supports.
-
-'R0'
-    If no supports were provided, R0 is the reaction force at the clamped
-    point x=0. Basically the sum of all loads on the beam.
-
-'M0'
-    If no supports were provided, M0 is the reaction moment at the clamped
-    point x=0.
-
-
+    supports. Else R[0] is the reaction force at the clamped x=0 and R[1] is
+    the reaction moment at that point
