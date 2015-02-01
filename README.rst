@@ -150,7 +150,7 @@ are added;
 
 'a'
     A numpy array containing angle between the tangent line of the beam and the
-    x-axis in degrees at each mm of the beam.
+    x-axis in radians at each mm of the beam.
 
 'R'
     If 'supports' was provided, R is a 2-tuple of the reaction forces at said

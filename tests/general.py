@@ -23,11 +23,13 @@ def compare(d, i, f):
     :param d: description of the situation
     :param i: integration result from beammech
     :param f: result from formula
+    :returns: True if the integration result is within 0.75% of the
+    formula result, False otherwise.
     """
     result = "\033[31mFAIL\033[0m"
-    if math.fabs((i-f)/f) < 0.005:
+    if math.fabs((i-f)/f) < 0.0075:
         result = "\033[32mPASS\033[0m"
-    s = "{}. beammech: {:.3f} mm, formula: {:.3f} mm. {}"
+    s = "{}. beammech: {:.4g}, formula: {:.4g}. {}"
     print(s.format(d, i, f, result))
 
 
@@ -47,8 +49,9 @@ def lc1():
                'shear': False}
     problem['loads'] = bm.Load(force=P, pos=L)
     bm.solve(problem)
-    compare(lc1.__doc__, problem['y'][L], P*L**3/(3*E*I))
-
+    print(lc1.__doc__)
+    compare('- end deflection', problem['y'][L], P*L**3/(3*E*I))
+    compare('- end angle', problem['a'][L], P*L**2/(2*E*I))
 
 
 def lc2():
@@ -67,7 +70,9 @@ def lc2():
                'shear': False}
     problem['loads'] = bm.DistLoad(force=P, start=0, end=L)
     bm.solve(problem)
-    compare(lc2.__doc__, problem['y'][L], P*L**3/(8*E*I))
+    print(lc2.__doc__)
+    compare('- deflection', problem['y'][L], P*L**3/(8*E*I))
+    compare('- end angle', problem['a'][L], P*L**2/(6*E*I))
 
 
 def lc3():
@@ -86,7 +91,10 @@ def lc3():
                'supports': (0, L), 'shear': False}
     problem['loads'] = bm.DistLoad(force=P, start=0, end=L)
     bm.solve(problem)
-    compare(lc3.__doc__, problem['y'][int(L/2)], 5*P*L**3/(384*E*I))
+    print(lc3.__doc__)
+    compare('- deflection', problem['y'][int(L/2)], 5*P*L**3/(384*E*I))
+    compare('- begin angle', problem['a'][0], P*L**2/(24*E*I))
+    compare('- end angle', problem['a'][L], -P*L**2/(24*E*I))
 
 
 def lc4():
@@ -105,16 +113,32 @@ def lc4():
                'supports': (0, L), 'shear': False}
     problem['loads'] = bm.Load(force=P, pos=L/2)
     bm.solve(problem)
-    compare(lc4.__doc__, problem['y'][int(L/2)], P*L**3/(48*E*I))
+    print(lc4.__doc__)
+    compare('- deflection', problem['y'][int(L/2)], P*L**3/(48*E*I))
+    compare('- begin angle', problem['a'][0], P*L**2/(16*E*I))
+    compare('- end angle', problem['a'][L], -P*L**2/(16*E*I))
 
 
-# def lc5():
-#     """Ends supported beam with triangle load"""
-#     supports = (0, L)
-#     F = bm.TriangleLoad(P, supports)
-#     D, R1, _ = bm.shearforce(L, F, supports)
-#     _, y, _, _ = bm.loadcase(D, E, props, supports=supports, shear=False)
-#     compare(lc5.__doc__, y[int(0.519*L)], 0.01304*P*L**3/(E*I))
+def lc5():
+    """Ends supported beam with triangle load"""
+    E = 0.5*240000  # Young's Modulus of the beam's material in [MPa]
+    L = 1000  # Length of the beam in [mm]
+    P = -500  # Force in [N]
+    B = 400
+    H = 30
+    h = 26
+    I = B*(H**3 - h**3)/12
+    G = 28
+    A = B*h
+    problem = {'length': L, 'EI': np.ones(L+1)*E*I, 'GA': np.ones(L+1)*G*A,
+               'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
+               'supports': (0, L), 'shear': False}
+    problem['loads'] = bm.TriangleLoad(force=P, start=0, end=L)
+    bm.solve(problem)
+    print(lc5.__doc__)
+    compare('- deflection', problem['y'][0.519*L], 0.01304*P*L**3/(E*I))
+    compare('- begin angle', problem['a'][0], 7*P*L**2/(180*E*I))
+    compare('- end angle', problem['a'][L], -2*P*L**2/(45*E*I))
 
 
 def lc6():
@@ -134,7 +158,11 @@ def lc6():
     problem['loads'] = [bm.Load(force=P, pos=L/4), bm.Load(force=P, pos=L/2),
                         bm.Load(force=P, pos=3*L/4)]
     bm.solve(problem)
-    compare(lc6.__doc__, problem['y'][int(L/2)], 19*P*L**3/(384*E*I))
+    print(lc6.__doc__)
+    compare('- deflection', problem['y'][int(L/2)], 19*P*L**3/(384*E*I))
+    compare('- begin angle', problem['a'][0], 5*P*L**2/(32*E*I))
+    compare('- end angle', problem['a'][L], -5*P*L**2/(32*E*I))
+
 
 
 if __name__ == '__main__':
@@ -142,5 +170,5 @@ if __name__ == '__main__':
     lc2()
     lc3()
     lc4()
-#    lc5()
+    lc5()
     lc6()

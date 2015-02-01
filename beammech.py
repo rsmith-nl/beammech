@@ -79,6 +79,8 @@ class DistLoad(Load):
         """
         size = _force(kwargs)
         self.start, self.end = _start_end(kwargs)
+        if self.start > self.end:
+            self.start, self.end = self.end, self.start
         Load.__init__(self, force=size, pos=float(self.start+self.end)/2)
 
     def __str__(self):
@@ -94,30 +96,31 @@ class DistLoad(Load):
         return np.concatenate(parts)
 
 
-# class TriangleLoad(DistLoad):
-#    """Linearly rising distributed load."""
-#
-#    def __init__(self, **kwargs):
-#        DistLoad.__init__(self, kwargs)
-#        length = abs(self.start - self.end)
-#        self.pos = int(round(min(pos))) + 2.0*length/3.0
-#        self.q = 2*self.size/length
-#
-#    def __str__(self):
-#        r = "linearly {} distributed load of {} N @ {}--{} mm."
-#        if self.start < self.end:
-#            direction = 'ascending'
-#        else:
-#            direction = 'descending'
-#        return r.format(direction, self.size, self.start, self.end)
-#
-#    def shear(self, length):
-#        rem = length + 1 - self.end
-#        parts = (np.zeros(self.start),
-#                 np.linspace(0, self.q, self.end-self.start),
-#                 np.ones(rem)*self.q)
-#        dv = np.concatenate(parts)
-#        return np.cumsum(dv)
+class TriangleLoad(DistLoad):
+   """Linearly rising distributed load."""
+
+   def __init__(self, **kwargs):
+       DistLoad.__init__(self, **kwargs)
+       length = abs(self.start - self.end)
+       pos = (self.start, self.end)
+       self.pos = round(min(pos)) + 2.0*length/3.0
+       self.q = 2*self.size/length
+
+   def __str__(self):
+       r = "linearly {} distributed load of {} N @ {}--{} mm."
+       if self.start < self.end:
+           direction = 'ascending'
+       else:
+           direction = 'descending'
+       return r.format(direction, self.size, self.start, self.end)
+
+   def shear(self, length):
+       rem = length + 1 - self.end
+       parts = (np.zeros(self.start),
+                np.linspace(0, self.q, self.end-self.start),
+                np.ones(rem)*self.q)
+       dv = np.concatenate(parts)
+       return np.cumsum(dv)
 
 
 def _force(kwargs):
@@ -160,7 +163,7 @@ def _check_length_supports(problem):
     :returns: length, supports. This function raises exceptions when
     problems are found.
     """
-    problem['length'] = int(round(problem['length']))
+    problem['length'] = round(problem['length'])
     if problem['length'] < 1:
         raise ValueError('length must be ≥1')
     if 'supports' in problem:
@@ -168,7 +171,7 @@ def _check_length_supports(problem):
         if len(s) != 2:
             t = 'The problem definition must contain exactly two supports.'
             raise ValueError(t)
-        s = (int(round(s[0])), int(round(s[1])))
+        s = (round(s[0]), round(s[1]))
         if s[0] == s[1]:
             raise ValueError('Two identical supports found!')
         elif s[0] > s[1]:
@@ -297,4 +300,4 @@ def solve(problem):
         y = translated + slope
     problem['D'], problem['M'] = D, M
     problem['y'], problem['R'] = y, (R1, R2)
-    problem['a'] = np.rad2deg(np.arctan(dy))
+    problem['a'] = np.arctan(dy)
