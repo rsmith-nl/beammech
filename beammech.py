@@ -266,6 +266,7 @@ def solve(problem):
     """
     length, (s1, s2) = _check_length_supports(problem)
     loads = _check_loads(problem)
+    loads = [ld for ld in loads]  # make a copy since we modifiy it!
     EI, GA, top, bot = _check_arrays(problem)
     shear = _check_shear(problem)
     moment = sum([ld.moment(s1) for ld in loads])
