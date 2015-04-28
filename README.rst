@@ -47,8 +47,8 @@ integer.  The beam will stretch from x = 0 to x = length.  There must be
 exactly two supports.  If necessary these will be placed into ascending order.
 The beam is assumed to be simply supported at the two support points.  This
 means that vertical movement of those points is prescribed as 0, but rotation
-of the beam around those points is not restricted.  If no supports are given,
-the beam is assumed to be clamped at x=0.
+of the beam around those points is not restricted.  If the value of supports
+is None, the beam is assumed to be clamped at x=0.
 
 We need to define some loads on the beam.  Several types of load are defined,
 all of them acting in the y-direction.

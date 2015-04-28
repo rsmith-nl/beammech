@@ -46,8 +46,8 @@ def lc1():
     A = B*h
     problem = {'length': L, 'EI': np.ones(L+1)*E*I, 'GA': np.ones(L+1)*G*A,
                'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'shear': False}
-    problem['loads'] = bm.Load(force=P, pos=L)
+               'shear': False, 'supports': None,
+               'loads': bm.Load(force=P, pos=L)}
     bm.solve(problem)
     print(lc1.__doc__)
     s = '- strain at clamped end; top {:.4g}, bottom {:.4g}'
@@ -69,8 +69,8 @@ def lc2():
     A = B*h
     problem = {'length': L, 'EI': np.ones(L+1)*E*I, 'GA': np.ones(L+1)*G*A,
                'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'shear': False}
-    problem['loads'] = bm.DistLoad(force=P, start=0, end=L)
+               'shear': False, 'supports': None,
+               'loads': bm.DistLoad(force=P, start=0, end=L)}
     bm.solve(problem)
     print(lc2.__doc__)
     compare('- deflection', problem['y'][L], P*L**3/(8*E*I))
@@ -90,8 +90,8 @@ def lc3():
     A = B*h
     problem = {'length': L, 'EI': np.ones(L+1)*E*I, 'GA': np.ones(L+1)*G*A,
                'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'supports': (0, L), 'shear': False}
-    problem['loads'] = bm.DistLoad(force=P, start=0, end=L)
+               'supports': (0, L), 'shear': False,
+               'loads': bm.DistLoad(force=P, start=0, end=L)}
     bm.solve(problem)
     print(lc3.__doc__)
     compare('- deflection', problem['y'][int(L/2)], 5*P*L**3/(384*E*I))
@@ -112,8 +112,8 @@ def lc4():
     A = B*h
     problem = {'length': L, 'EI': np.ones(L+1)*E*I, 'GA': np.ones(L+1)*G*A,
                'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'supports': (0, L), 'shear': False}
-    problem['loads'] = bm.Load(force=P, pos=L/2)
+               'supports': (0, L), 'shear': False,
+               'loads': bm.Load(force=P, pos=L/2)}
     bm.solve(problem)
     print(lc4.__doc__)
     compare('- deflection', problem['y'][int(L/2)], P*L**3/(48*E*I))
@@ -134,8 +134,8 @@ def lc5():
     A = B*h
     problem = {'length': L, 'EI': np.ones(L+1)*E*I, 'GA': np.ones(L+1)*G*A,
                'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'supports': (0, L), 'shear': False}
-    problem['loads'] = bm.TriangleLoad(force=P, start=0, end=L)
+               'supports': (0, L), 'shear': False,
+               'loads': bm.TriangleLoad(force=P, start=0, end=L)}
     bm.solve(problem)
     print(lc5.__doc__)
     compare('- deflection', problem['y'][0.519*L], 0.01304*P*L**3/(E*I))
@@ -164,7 +164,6 @@ def lc6():
     compare('- deflection', problem['y'][int(L/2)], 19*P*L**3/(384*E*I))
     compare('- begin angle', problem['a'][0], 5*P*L**2/(32*E*I))
     compare('- end angle', problem['a'][L], -5*P*L**2/(32*E*I))
-
 
 
 if __name__ == '__main__':

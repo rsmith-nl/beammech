@@ -159,6 +159,9 @@ def _start_end(kwargs):
 def _check_length_supports(problem):
     """Validate if the problem contains proper length and supports
 
+    The value of the 'length' is rounded. The location of the supports is
+    also rounded and the supports are sorted in ascending order.
+
     :param problem: dictionary containing the parameters of the problem
     :returns: length, supports. This function raises exceptions when
     problems are found.
@@ -166,8 +169,8 @@ def _check_length_supports(problem):
     problem['length'] = round(problem['length'])
     if problem['length'] < 1:
         raise ValueError('length must be ≥1')
-    if 'supports' in problem:
-        s = problem['supports']
+    s = problem['supports']
+    if s is not None:
         if len(s) != 2:
             t = 'The problem definition must contain exactly two supports.'
             raise ValueError(t)
@@ -178,9 +181,9 @@ def _check_length_supports(problem):
             s = (s[1], s[0])
         if s[0] < 0 or s[1] > problem['length']:
             raise ValueError('Support(s) outside of the beam!')
-        problem['supports'] = s
     else:
         s = (0, None)
+    problem['supports'] = s
     return (problem['length'], s)
 
 
