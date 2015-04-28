@@ -260,6 +260,66 @@ def patientload(**kwargs):
 def solve(problem):
     """Solve the beam problem.
 
+    The input should be a dictionary that contains;
+
+    'length'
+        An integer number (L) in mm.
+
+    'supports'
+        A 2-tuple of integers indicating the support positions. If omitted,
+        the beam is clamped at 0.
+
+    'loads'
+        An iterable of Loads.
+
+    'EI'
+        An (L+1) numpy array of the bending stiffness at every mm. This is a
+        product of the Young's modulus E and the second area moment I.
+
+    'GA'
+        An (L+1) numpy array of the shear stiffness at every mm. This is a
+        product of the shear modulus G and the cross-section area A.
+
+    'top'
+        An (L+1) numpy array of the distance from the neutral line to the
+        top of the cross-section at every mm.
+
+    'bot'
+        An (L+1) numpy array of the distance from the neutral line to the
+        bottom of the cross-section at every mm.
+
+    After solving the problem, the following will be added to the problem
+    dictionary:
+
+    'D'
+        A numpy array containing the shear force in the cross-section at
+        each mm of the beam.
+
+    'M'
+        A numpy array containing the bending moment in the cross-section at
+        each mm of the beam.
+
+    'y'
+        A numpy array containing the vertical displacement at each mm of the
+        beam.
+
+    'a'
+        A numpy array containing angle between the tangent line of the beam
+        and the x-axis in radians at each mm of the beam.
+
+    'etop'
+        A numpy array containing the strain at the top of the cross-section at
+        each mm of the beam.
+
+    'ebot'
+        A numpy array containing the strain at the bottom of the cross-section
+        at each mm of the beam.
+
+    'R'
+        If 'supports' was provided, R is a 2-tuple of the reaction forces at
+        said supports. Else R[0] is the reaction force at the clamped x=0 and
+        R[1] is the reaction moment at that point
+
     :param problem: dictionary containing the parameters of the problem
     :returns: No value is returned. The ‘problem’ parameter dictionary is
     updated with the results.
