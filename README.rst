@@ -2,9 +2,9 @@ Introduction
 ============
 
 Over the years I've written several programs in languages from Perl to Lua to
-solve the differential equations for pure bending y'' = M/(E·I) and shear y' =
-α·V/(G·A) of beams.  These equations are used to study the deformation and
-stresses in structures.
+solve the differential equations for pure bending d²y/dx² = M/(E·I) and shear
+dy/dx = α·V/(G·A) of beams.  These equations are used to study the deformation
+and stresses in structures.
 
 For the simple cases of pure bending under a single load (where E·I is
 constant over the length of the beam, and where shear deformation is ignored),

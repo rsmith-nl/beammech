@@ -1,7 +1,10 @@
-# -*- coding: utf-8 -*-
+# file: setup.py
+# vim:fileencoding=utf-8:ft=python
 # Installation script for beammech
-# R.F. Smith <rsmith@xs4all.nl>
-# $Date$
+#
+# Author: R.F. Smith <rsmith@xs4all.nl>
+# Created: 2015-04-28 19:45:39 +0200
+# Last modified: 2015-05-03 11:36:28 +0200
 
 from distutils.core import setup
 
@@ -10,7 +13,7 @@ with open('README.rst') as file:
 
 
 setup(name='beammech',
-      version='$Revision$'[11:-2],
+      version='$Revision$'[12:17],
       license='BSD',
       description='Module to evaluate loaded beams.',
       author='Roland Smith', author_email='rsmith@xs4all.nl',
@@ -27,5 +30,5 @@ setup(name='beammech',
                    'Programming Language :: Python :: 3.4',
                    'Topic :: Scientific/Engineering'
                    ],
-      long_description = ld
+      long_description=ld
       )
