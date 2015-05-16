@@ -1,7 +1,7 @@
 # file: beammech.py
 # vim:fileencoding=utf-8:ft=python
 # Copyright © 2012-2015 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2015-05-03 11:37:56 +0200
+# Last modified: 2015-05-16 20:18:28 +0200
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -29,7 +29,11 @@ from __future__ import division, print_function
 import numpy as np
 import math
 
-__version__ = '$Revision$'[12:17]
+__title__ = 'beammech'
+__version__ = '0.9.0'
+__author__ = 'Roland Smith'
+__license__ = 'BSD'
+__copyright__ = 'Copyright © 2012-2015 R.F. Smith'
 
 
 class Load(object):
