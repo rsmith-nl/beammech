@@ -1,7 +1,7 @@
 # file: beammech.py
 # vim:fileencoding=utf-8:ft=python
 # Copyright © 2012-2015 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2015-05-03 11:37:56 +0200
+# Last modified: 2015-06-11 14:07:02 +0200
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -29,7 +29,11 @@ from __future__ import division, print_function
 import numpy as np
 import math
 
-__version__ = '$Revision$'[12:17]
+__title__ = 'beammech'
+__version__ = '0.10.0'
+__author__ = 'Roland Smith'
+__license__ = 'BSD'
+__copyright__ = 'Copyright © 2012-2015 R.F. Smith'
 
 
 class Load(object):
@@ -252,14 +256,14 @@ def solve(problem):
     if s2:
         # First, translate the whole list so that the value at the
         # index anchor is zero.
-        translated = y - y[s1]
+        y = y - y[s1]
         # Then rotate around the anchor so that the deflection at the other
         # support is also 0.
         delta = -y[s2]/math.fabs(s1-s2)
         slope = np.concatenate((np.arange(-s1, 1, 1),
                                 np.arange(1, len(y)-s1)))*delta
         dy += delta
-        y = translated + slope
+        y = y + slope
     problem['D'], problem['M'] = D, M
     problem['y'], problem['R'] = y, (R1, R2)
     problem['a'] = np.arctan(dy)
