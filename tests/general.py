@@ -11,10 +11,13 @@
 
 """Test cases for beammech."""
 
-from __future__ import division, print_function
-import beammech as bm
+import sys
 import math
 import numpy as np
+
+sys.path.insert(1, '..')
+
+import beammech as bm
 
 
 def compare(d, i, f):
