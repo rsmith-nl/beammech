@@ -3,7 +3,7 @@
 #
 # Author: R.F. Smith <rsmith@xs4all.nl>
 # Created: 2015-08-24 01:34:26 +0200
-# Last modified: 2015-08-24 20:32:51 +0200
+# Last modified: 2015-08-24 22:38:21 +0200
 
 """
 Tests for Load classes and load cases.
@@ -132,3 +132,61 @@ def test_supported_distributed():
     deflection_formula = 19*P*L**3/(384*E*I)
     reldiff = abs((deflection_bm-deflection_formula)/deflection_formula)
     assert reldiff < 0.005
+
+
+def test_gvepet1():
+    """3-point bending GVEPET1 panel"""
+    L = 200  # mm
+    B = 50  # mm
+    h = 28  # mm
+    t = 1.3  # mm
+    E = 22185  # MPa
+    G = 8*1.5  # MPa, schuim met siktsels
+    P = -150  # N
+    H = h + 2*t
+    I = B*(H**3-h**3)/12
+    A = B*h
+    problem = {'length': L, 'EI': np.ones(L+1)*E*I, 'GA': np.ones(L+1)*G*A,
+               'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
+               'supports': (0, L), 'shear': False,
+               'loads': bm.Load(force=P, pos=L/2)}
+    bm.solve(problem)
+    bending_bm = problem['y'][L/2]
+    bending_formula = P*L**3/(48*E*I)
+    problem["shear"] = True
+    bm.solve(problem)
+    total_bm = problem['y'][L/2]
+    total_formula = bending_formula + (1.5*P/2*L/2)/(G*A)
+    reldiff = abs((bending_bm-bending_formula)/bending_formula)
+    assert reldiff < 0.005
+    reldifft = abs((total_bm - total_formula)/total_formula)
+    assert reldifft < 0.02
+
+
+def test_cvepet3():
+    """3-point bending CVEPET3 panel"""
+    L = 200  # mm
+    B = 50  # mm
+    h = 26  # mm
+    t = 2.5  # mm
+    E = 43820  # MPa
+    G = 8*1.5  # MPa, schuim met siktsels
+    P = -150  # N
+    H = h + 2*t
+    I = B*(H**3-h**3)/12
+    A = B*h
+    problem = {'length': L, 'EI': np.ones(L+1)*E*I, 'GA': np.ones(L+1)*G*A,
+               'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
+               'supports': (0, L), 'shear': False,
+               'loads': bm.Load(force=P, pos=L/2)}
+    bm.solve(problem)
+    bending_bm = problem['y'][L/2]
+    bending_formula = P*L**3/(48*E*I)
+    problem["shear"] = True
+    bm.solve(problem)
+    total_bm = problem['y'][L/2]
+    total_formula = bending_formula + (1.5*P/2*L/2)/(G*A)
+    reldiff = abs((bending_bm-bending_formula)/bending_formula)
+    assert reldiff < 0.005
+    reldifft = abs((total_bm - total_formula)/total_formula)
+    assert reldifft < 0.02
