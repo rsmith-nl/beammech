@@ -4,7 +4,7 @@
 #
 # Author: R.F. Smith <rsmith@xs4all.nl>
 # Created: 2015-04-28 19:45:39 +0200
-# Last modified: 2015-05-03 11:36:28 +0200
+# Last modified: 2015-09-20 16:57:35 +0200
 
 from distutils.core import setup
 
@@ -13,7 +13,7 @@ with open('README.rst') as file:
 
 
 setup(name='beammech',
-      version='$Revision$'[12:17],
+      version='0.10.1',
       license='BSD',
       description='Module to evaluate loaded beams.',
       author='Roland Smith', author_email='rsmith@xs4all.nl',
