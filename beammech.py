@@ -1,7 +1,7 @@
 # file: beammech.py
 # vim:fileencoding=utf-8:ft=python
 # Copyright © 2012-2015 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2015-06-11 14:07:02 +0200
+# Last modified: 2015-09-20 16:45:54 +0200
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -25,15 +25,10 @@
 
 """Module for stiffness and strength calculations of beams."""
 
-from __future__ import division, print_function
+__version__ = '0.10.1'
+
 import numpy as np
 import math
-
-__title__ = 'beammech'
-__version__ = '0.10.0'
-__author__ = 'Roland Smith'
-__license__ = 'BSD'
-__copyright__ = 'Copyright © 2012-2015 R.F. Smith'
 
 
 class Load(object):
