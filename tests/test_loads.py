@@ -1,9 +1,9 @@
 # file: test_loads.py
-# vim:fileencoding=utf-8:ft=python
+# vim:fileencoding=utf-8:ft=python:fdm=indent
 #
 # Author: R.F. Smith <rsmith@xs4all.nl>
 # Created: 2015-08-24 01:34:26 +0200
-# Last modified: 2015-08-24 22:38:21 +0200
+# Last modified: 2015-09-28 20:31:28 +0200
 
 """
 Tests for Load classes and load cases.

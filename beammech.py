@@ -1,7 +1,7 @@
 # file: beammech.py
-# vim:fileencoding=utf-8:ft=python
+# vim:fileencoding=utf-8:ft=python:fdm=indent
 # Copyright © 2012-2015 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2015-09-20 16:45:54 +0200
+# Last modified: 2015-09-28 20:41:41 +0200
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -29,6 +29,90 @@ __version__ = '0.10.1'
 
 import numpy as np
 import math
+
+
+def solve(problem):
+    """Solve the beam problem.
+
+    Arguments:
+        problem: A dictionary containing the parameters of the problem.
+            For this function, the dictionary should have the following keys;
+            * 'length': The length of the beam in mm. This will be rounded to
+                an integer value.
+            * 'supports': Either None or a 2-tuple of numbers between 0 and
+                length. If None, the beam will be assumed to be clamped at the
+                origin.
+            * 'loads': Either a Load or an iterable of Loads.
+            * 'EI': An iterable of size length+1 containing the bending
+                stiffenss in every mm of the cross-section of the beam.
+            * 'GA': An iterable of size length+1 containing the shear
+                stiffenss in every mm of the cross-section of the beam.
+            * 'top': An iterable of size length+1 containing the height
+                above the neutral line in every mm of the cross-section of the
+                beam.
+            * 'bottom': An iterable of size length+1 containing the height
+                under the neutral line in every mm of the cross-section of the
+                beam.
+            * 'shear': A boolean indication if shear deformations should be
+                included. Will be added and set to 'True' if not provided.
+
+    Returns:
+        This function returns the modified 'problem' dictionary.
+        The following items will have been added:
+        * 'D': A numpy array containing the shear force in the cross-section
+            at each mm of the beam.
+        * 'M': A numpy array containing the bending moment in the cross-section
+            at each mm of the beam.
+        * 'y': A numpy array containing the vertical displacement at each mm
+            of the beam.
+        * 'etop': A numpy array containing the strain at the top of the
+            cross-section at each mm of the beam.
+        * 'ebot': A numpy array containing the strain at the bottom of the
+            cross-section at each mm of the beam.
+        * 'R': If 'supports' was provided, R is a 2-tuple of the reaction
+            forces at said supports. Else R[0] is the reaction force at the
+            clamped x=0 and R[1] is the reaction moment at that point.
+    """
+    length, (s1, s2) = _check_length_supports(problem)
+    loads = _check_loads(problem)
+    loads = [ld for ld in loads]  # make a copy since we modifiy it!
+    EI, GA, top, bot = _check_arrays(problem)
+    shear = _check_shear(problem)
+    moment = sum([ld.moment(s1) for ld in loads])
+    if s2:
+        R2 = Load(force=-moment/(s2-s1), pos=s2)
+        loads.append(R2)
+    else:  # clamped at x = 0
+        R2 = -moment
+    # Force equilibrium
+    R1 = Load(force=-sum([ld.size for ld in loads]), pos=s1)
+    loads.append(R1)
+    D = np.sum(np.array([ld.shear(length) for ld in loads]), axis=0)
+    M = np.cumsum(D)
+    if s2 is None:
+        M -= M[-1]
+    ddy_b = M/EI
+    etop, ebot = -top*ddy_b, -bot*ddy_b
+    dy = np.cumsum(ddy_b)
+    if shear:
+        dy += -1.5*D/GA  # shear
+    y = np.cumsum(dy)
+    if s2:
+        # First, translate the whole list so that the value at the
+        # index anchor is zero.
+        y = y - y[s1]
+        # Then rotate around the anchor so that the deflection at the other
+        # support is also 0.
+        delta = -y[s2]/math.fabs(s1-s2)
+        slope = np.concatenate((np.arange(-s1, 1, 1),
+                                np.arange(1, len(y)-s1)))*delta
+        dy += delta
+        y = y + slope
+    problem['D'], problem['M'] = D, M
+    problem['y'], problem['R'] = y, (R1, R2)
+    problem['a'] = np.arctan(dy)
+    problem['etop'], problem['ebot'] = etop, ebot
+    return problem
 
 
 class Load(object):
@@ -180,90 +264,6 @@ def patientload(**kwargs):
                  (0.074*f, (s + 1200, s + 1700)),  # arms
                  (0.074*f, (s + 1220, s + 1900))]  # head
     return [DistLoad(force=i[0], pos=i[1]) for i in fractions]
-
-
-def solve(problem):
-    """Solve the beam problem.
-
-    Arguments:
-        problem: A dictionary containing the parameters of the problem.
-            For this function, the dictionary should have the following keys;
-            * 'length': The length of the beam in mm. This will be rounded to
-                an integer value.
-            * 'supports': Either None or a 2-tuple of numbers between 0 and
-                length. If None, the beam will be assumed to be clamped at the
-                origin.
-            * 'loads': Either a Load or an iterable of Loads.
-            * 'EI': An iterable of size length+1 containing the bending
-                stiffenss in every mm of the cross-section of the beam.
-            * 'GA': An iterable of size length+1 containing the shear
-                stiffenss in every mm of the cross-section of the beam.
-            * 'top': An iterable of size length+1 containing the height
-                above the neutral line in every mm of the cross-section of the
-                beam.
-            * 'bottom': An iterable of size length+1 containing the height
-                under the neutral line in every mm of the cross-section of the
-                beam.
-            * 'shear': A boolean indication if shear deformations should be
-                included. Will be added and set to 'True' if not provided.
-
-    Returns:
-        This function returns the modified 'problem' dictionary.
-        The following items will have been added:
-        * 'D': A numpy array containing the shear force in the cross-section
-            at each mm of the beam.
-        * 'M': A numpy array containing the bending moment in the cross-section
-            at each mm of the beam.
-        * 'y': A numpy array containing the vertical displacement at each mm
-            of the beam.
-        * 'etop': A numpy array containing the strain at the top of the
-            cross-section at each mm of the beam.
-        * 'ebot': A numpy array containing the strain at the bottom of the
-            cross-section at each mm of the beam.
-        * 'R': If 'supports' was provided, R is a 2-tuple of the reaction
-            forces at said supports. Else R[0] is the reaction force at the
-            clamped x=0 and R[1] is the reaction moment at that point.
-    """
-    length, (s1, s2) = _check_length_supports(problem)
-    loads = _check_loads(problem)
-    loads = [ld for ld in loads]  # make a copy since we modifiy it!
-    EI, GA, top, bot = _check_arrays(problem)
-    shear = _check_shear(problem)
-    moment = sum([ld.moment(s1) for ld in loads])
-    if s2:
-        R2 = Load(force=-moment/(s2-s1), pos=s2)
-        loads.append(R2)
-    else:  # clamped at x = 0
-        R2 = -moment
-    # Force equilibrium
-    R1 = Load(force=-sum([ld.size for ld in loads]), pos=s1)
-    loads.append(R1)
-    D = np.sum(np.array([ld.shear(length) for ld in loads]), axis=0)
-    M = np.cumsum(D)
-    if s2 is None:
-        M -= M[-1]
-    ddy_b = M/EI
-    etop, ebot = -top*ddy_b, -bot*ddy_b
-    dy = np.cumsum(ddy_b)
-    if shear:
-        dy += -1.5*D/GA  # shear
-    y = np.cumsum(dy)
-    if s2:
-        # First, translate the whole list so that the value at the
-        # index anchor is zero.
-        y = y - y[s1]
-        # Then rotate around the anchor so that the deflection at the other
-        # support is also 0.
-        delta = -y[s2]/math.fabs(s1-s2)
-        slope = np.concatenate((np.arange(-s1, 1, 1),
-                                np.arange(1, len(y)-s1)))*delta
-        dy += delta
-        y = y + slope
-    problem['D'], problem['M'] = D, M
-    problem['y'], problem['R'] = y, (R1, R2)
-    problem['a'] = np.arctan(dy)
-    problem['etop'], problem['ebot'] = etop, ebot
-    return problem
 
 
 def _force(kwargs):
