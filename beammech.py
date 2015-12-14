@@ -1,7 +1,7 @@
 # file: beammech.py
 # vim:fileencoding=utf-8:ft=python:fdm=indent
 # Copyright © 2012-2015 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2015-09-28 20:41:41 +0200
+# Last modified: 2015-12-15 00:08:19 +0100
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -25,10 +25,10 @@
 
 """Module for stiffness and strength calculations of beams."""
 
-__version__ = '0.10.1'
-
 import numpy as np
 import math
+
+__version__ = '0.10.1'
 
 
 def solve(problem):
@@ -264,6 +264,30 @@ def patientload(**kwargs):
                  (0.074*f, (s + 1200, s + 1700)),  # arms
                  (0.074*f, (s + 1220, s + 1900))]  # head
     return [DistLoad(force=i[0], pos=i[1]) for i in fractions]
+
+
+def interpolate(tuples):
+    """
+    Interpolates between tuples.
+
+    Arguments:
+        tuples: list of 2-tuples
+
+    Returns:
+        a numpy array with interpolated values.
+    """
+    tuples = sorted(tuples)
+    x = np.array([int(round(x)) for x, _ in tuples])
+    y = np.array([int(round(y)) for _, y in tuples])
+    startx, starty = x[0], y[0]
+    arrays = []
+    for dx, dy in zip(x[1:] - x[:-1], y[1:] - y[:-1]):
+        a = np.linspace(starty, starty + dy, num=dx+1, endpoint=True)
+        arrays.append(a[:-1])
+        startx += dx
+        starty += dy
+    arrays.append(np.array([y[-1]]))
+    return np.concatenate(arrays)
 
 
 def _force(kwargs):
