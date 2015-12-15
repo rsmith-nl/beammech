@@ -1,7 +1,7 @@
 # file: beammech.py
-# vim:fileencoding=utf-8:ft=python:fdm=indent
+# vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2015 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2015-12-15 16:10:00 +0100
+# Last modified: 2015-12-15 20:54:22 +0100
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -28,10 +28,10 @@
 import numpy as np
 import math
 
-__version__ = '0.10.1'
+__version__ = '0.10.2'
 
 
-def solve(problem):
+def solve(problem):  # {{{
     """Solve the beam problem.
 
     Arguments:
@@ -112,10 +112,10 @@ def solve(problem):
     problem['y'], problem['R'] = y, (R1, R2)
     problem['a'] = np.arctan(dy)
     problem['etop'], problem['ebot'] = etop, ebot
-    return problem
+    return problem  # }}}
 
 
-class Load(object):
+class Load(object):  # {{{
     """Point load."""
 
     def __init__(self, **kwargs):
@@ -153,10 +153,10 @@ class Load(object):
         """
         rv = np.zeros(length+1)
         rv[self.pos:] = self.size
-        return rv
+        return rv  # }}}
 
 
-class DistLoad(Load):
+class DistLoad(Load):  # {{{
     """Evenly distributed load."""
 
     def __init__(self, **kwargs):
@@ -190,10 +190,10 @@ class DistLoad(Load):
         q = self.size
         parts = (np.zeros(self.start), np.linspace(0, q, d),
                  np.ones(rem)*q)
-        return np.concatenate(parts)
+        return np.concatenate(parts)  # }}}
 
 
-class TriangleLoad(DistLoad):
+class TriangleLoad(DistLoad):  # {{{
     """Linearly rising distributed load."""
 
     def __init__(self, **kwargs):
@@ -229,10 +229,10 @@ class TriangleLoad(DistLoad):
                  np.linspace(0, self.q, self.end-self.start),
                  np.ones(rem)*self.q)
         dv = np.concatenate(parts)
-        return np.cumsum(dv)
+        return np.cumsum(dv)  # }}}
 
 
-def patientload(**kwargs):
+def patientload(**kwargs):  # {{{
     """
     Returns a list of DistLoads that represent a patient
     load according to IEC 60601 specs. For this calculation the patient is
@@ -263,10 +263,10 @@ def patientload(**kwargs):
                  (0.408*f, (s + 1000, s + 1700)),  # torso
                  (0.074*f, (s + 1200, s + 1700)),  # arms
                  (0.074*f, (s + 1220, s + 1900))]  # head
-    return [DistLoad(force=i[0], pos=i[1]) for i in fractions]
+    return [DistLoad(force=i[0], pos=i[1]) for i in fractions]  # }}}
 
 
-def interpolate(tuples):
+def interpolate(tuples):  # {{{
     """
     Interpolates between tuples.
 
@@ -287,10 +287,10 @@ def interpolate(tuples):
         startx += dx
         starty += dy
     arrays.append(np.array([y[-1]]))
-    return np.concatenate(arrays)
+    return np.concatenate(arrays)  # }}}
 
 
-def _force(kwargs):
+def _force(kwargs):  # {{{
     """
     Determine the force. See Load.__init__()
 
@@ -303,10 +303,10 @@ def _force(kwargs):
         force = -9.81*float(kwargs['kg'])
     else:
         raise KeyError("No 'force' or 'kg' present")
-    return force
+    return force  # }}}
 
 
-def _start_end(kwargs):
+def _start_end(kwargs):  # {{{
     """
     Validate the position arguments. See DistLoad.__init_()
 
@@ -322,10 +322,10 @@ def _start_end(kwargs):
         pos = (round(float(kwargs['start'])), round(float(kwargs['end'])))
     else:
         raise KeyError("Neither 'pos' or 'start' and 'end' present")
-    return pos
+    return pos  # }}}
 
 
-def _check_length_supports(problem):
+def _check_length_supports(problem):  # {{{
     """
     Validate that the problem contains proper length and supports. See
     solve().
@@ -351,10 +351,10 @@ def _check_length_supports(problem):
     else:
         s = (0, None)
     problem['supports'] = s
-    return (problem['length'], s)
+    return (problem['length'], s)  # }}}
 
 
-def _check_loads(problem):
+def _check_loads(problem):  # {{{
     """
     Validate the loads in the problem. See solve().
 
@@ -370,10 +370,10 @@ def _check_loads(problem):
     for ld in loads:
         if not isinstance(ld, Load):
             raise ValueError('Loads must be Load instances')
-    return list(loads)
+    return list(loads)  # }}}
 
 
-def _check_arrays(problem):
+def _check_arrays(problem):  # {{{
     """
     Validate the length of the EI, GA, top and bot iterables and converts
     them into numpy arrays. This will modify the problem dictionary.
@@ -390,10 +390,10 @@ def _check_arrays(problem):
         la = len(problem[key])
         if la != L + 1:
             raise ValueError(t.format(key, la, L))
-    return problem['EI'], problem['GA'], problem['top'], problem['bot']
+    return problem['EI'], problem['GA'], problem['top'], problem['bot']  # }}}
 
 
-def _check_shear(problem):
+def _check_shear(problem):  # {{{
     """
     Check if the problem should incluse shear. See solve().
 
@@ -404,4 +404,4 @@ def _check_shear(problem):
         problem['shear'] = True
     elif not isinstance(problem['shear'], bool):
         raise ValueError("'shear' should be a boolean.")
-    return problem['shear']
+    return problem['shear']  # }}}
