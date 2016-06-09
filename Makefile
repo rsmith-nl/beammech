@@ -15,12 +15,6 @@ all::
 
 PYSITE!=python3 -B -c 'import site; print(site.getsitepackages()[0])'
 
-tests::
-	@echo Python 2
-	@python2 -B tests/general.py
-	@echo Python 3
-	@python3 -B tests/general.py
-
 install: setup.py ${MOD}.py
 	@if [ `id -u` != 0 ]; then \
 		echo "You must be root to install the module!"; \
@@ -45,5 +39,5 @@ dist:
 clean::
 	rm -rf dist build backup-*.tar.gz *.py[co] MANIFEST tests/*.d
 
-check: ${MOD}.py .IGNORE
-	pylint --rcfile=tools/pylintrc ${SRCS}
+tests::
+	py.test-3.5 -v tests

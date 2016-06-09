@@ -1,18 +1,14 @@
 # file: test_loads.py
-# vim:fileencoding=utf-8:ft=python:fdm=indent
+# vim:fileencoding=utf-8:ft=python:fdm=marker
 #
 # Author: R.F. Smith <rsmith@xs4all.nl>
 # Created: 2015-08-24 01:34:26 +0200
-# Last modified: 2015-09-28 20:31:28 +0200
+# Last modified: 2016-06-09 23:33:20 +0200
 
 """
 Tests for Load classes and load cases.
-
-Run this test only with nosetests-3.4 -v test_loads.py
-Run all tests with: nosetests-3.4 -v test_*
 """
-
-from nose.tools import assert_raises
+import pytest
 import beammech as bm
 import numpy as np
 
@@ -28,7 +24,7 @@ G = 28
 A = B*h
 
 
-def test_load_goodargs():
+def test_load_goodargs():  # {{{1
     """beammech.Load with correct arguments"""
     A = bm.Load(kg=1, pos=200)
     assert A.size == -9.81
@@ -37,24 +33,30 @@ def test_load_goodargs():
     assert B.size == -20
     assert B.pos == 300
     C = bm.Load(kg='1', pos='200')
-    assert A.size == -9.81
-    assert A.pos == 200
+    assert C.size == -9.81
+    assert C.pos == 200
 
 
-def test_load_badargs():
+def test_load_badargs():  # {{{1
     """beammech.Load with faulty arguments"""
-    assert_raises(KeyError, bm.Load)  # All required arguments missing
-    assert_raises(KeyError, bm.Load, kg=-20)  # Required “pos” argument missing
+    with pytest.raises(KeyError):
+        bm.Load()  # All required arguments missing
+    with pytest.raises(KeyError):
+        bm.Load(kg=-20)  # Required “pos” argument missing
     # Required “force” or “kg” argument missing
-    assert_raises(KeyError, bm.Load, pos=231)
+    with pytest.raises(KeyError):
+        bm.Load(pos=231)
     # Required “force” argument misspelt
-    assert_raises(KeyError, bm.Load, forse=-200, pos=300)
+    with pytest.raises(KeyError):
+        bm.Load(forse=-200, pos=300)
     # Argument “pos” or “force” cannot be converted to float
-    assert_raises(ValueError, bm.Load, force=-120, pos='end')
-    assert_raises(ValueError, bm.Load, force='-q', pos=200)
+    with pytest.raises(ValueError):
+        bm.Load(force=-120, pos='end')
+    with pytest.raises(ValueError):
+        bm.Load(force='-q', pos=200)
 
 
-def test_clamped_pointload():
+def test_clamped_pointload():  # {{{1
     """Clamped beam with point load at end"""
     problem = {'length': L, 'EI': np.ones(L+1)*E*I, 'GA': np.ones(L+1)*G*A,
                'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
@@ -67,7 +69,7 @@ def test_clamped_pointload():
     assert reldiff < 0.005
 
 
-def test_clamped_distributed():
+def test_clamped_distributed():  # {{{1
     """Clamped beam with distributed load"""
     problem = {'length': L, 'EI': np.ones(L+1)*E*I, 'GA': np.ones(L+1)*G*A,
                'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
@@ -80,7 +82,7 @@ def test_clamped_distributed():
     assert reldiff < 0.005
 
 
-def test_supported_central_pointload():
+def test_supported_central_pointload():  # {{{1
     """Ends supported beam with central point load"""
     problem = {'length': L, 'EI': np.ones(L+1)*E*I, 'GA': np.ones(L+1)*G*A,
                'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
@@ -93,7 +95,7 @@ def test_supported_central_pointload():
     assert reldiff < 0.005
 
 
-def test_supported_distributed():
+def test_supported_distributed():  # {{{1
     """Ends supported beam with distributed load"""
     problem = {'length': L, 'EI': np.ones(L+1)*E*I, 'GA': np.ones(L+1)*G*A,
                'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
@@ -106,7 +108,7 @@ def test_supported_distributed():
     assert reldiff < 0.005
 
 
-def test_supported_distributed():
+def test_supported_triangl():  # {{{1
     """Ends supported beam with triangle load"""
     problem = {'length': L, 'EI': np.ones(L+1)*E*I, 'GA': np.ones(L+1)*G*A,
                'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
@@ -119,7 +121,7 @@ def test_supported_distributed():
     assert reldiff < 0.005
 
 
-def test_supported_distributed():
+def test_supported_pointloads():  # {{{1
     """Ends supported beam with three equidistant point loads"""
     problem = {'length': L, 'EI': np.ones(L+1)*E*I, 'GA': np.ones(L+1)*G*A,
                'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
@@ -134,7 +136,7 @@ def test_supported_distributed():
     assert reldiff < 0.005
 
 
-def test_gvepet1():
+def test_gvepet1():  # {{{1
     """3-point bending GVEPET1 panel"""
     L = 200  # mm
     B = 50  # mm
@@ -163,7 +165,7 @@ def test_gvepet1():
     assert reldifft < 0.02
 
 
-def test_cvepet3():
+def test_cvepet3():  # {{{1
     """3-point bending CVEPET3 panel"""
     L = 200  # mm
     B = 50  # mm
