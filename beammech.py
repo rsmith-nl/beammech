@@ -1,7 +1,7 @@
 # file: beammech.py
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2015 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2015-12-15 20:54:22 +0100
+# Last modified: 2017-02-07 20:40:50 +0100
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -28,7 +28,7 @@
 import numpy as np
 import math
 
-__version__ = '0.10.2'
+__version__ = '0.10.3'
 
 
 def solve(problem):  # {{{
@@ -113,6 +113,75 @@ def solve(problem):  # {{{
     problem['a'] = np.arctan(dy)
     problem['etop'], problem['ebot'] = etop, ebot
     return problem  # }}}
+
+
+def interpolate(tuples):  # {{{
+    """
+    Creates a numpy array and fills it by interpolation.
+
+    Arguments:
+        tuples: A list of 2-tuples (n, v). Note that the n values will be
+            rounded and converted to integers.
+
+    Returns:
+        A numpy array with interpolated values so that at index n the array has
+        the value v.
+
+    Examples:
+        >>> import numpy as np
+        >>> interpolate([(0,0), (3,3)])
+        array([ 0.,  1.,  2.,  3.])
+        >>> interpolate([(0,0), (4,3), (6,-1)])
+        array([ 0.  ,  0.75,  1.5 ,  2.25,  3.  ,  1.  , -1.  ])
+        >>> interpolate([(1,1), (4,4), (6,-3)])
+        array([ 1. ,  2. ,  3. ,  4. ,  0.5, -3. ])
+    """
+    x = np.array([int(round(x)) for x, _ in tuples])
+    y = np.array([y for _, y in tuples])
+    startx, starty = x[0], y[0]
+    arrays = []
+    for dx, dy in zip(x[1:] - x[:-1], y[1:] - y[:-1]):
+        if dx > 0:
+            a = np.linspace(starty, starty + dy, num=dx+1, endpoint=True)
+            arrays.append(a[:-1])
+        startx += dx
+        starty += dy
+    arrays.append(np.array([y[-1]]))
+    return np.concatenate(arrays)  # }}}
+
+
+def patientload(**kwargs):  # {{{
+    """
+    Returns a list of DistLoads that represent a patient
+    load according to IEC 60601 specs. For this calculation the patient is
+    assumed to be lying with his feet pointing to the origin.
+
+    Named arguments:
+        kg: Mass of the patient in kg.
+        force: The gravitational force of the patient in N. Note that this
+            should be a *negative* number.
+        feet: Location of the patient's feet in mm.
+        head: Location of the patient's head in mm. This is an alternative for
+            'feet'. Either 'feet' or 'head' must be present or a ValueError
+            will be raised.
+
+    Returns:
+        A list of DistLoads.
+    """
+    f = _force(kwargs)
+    if 'feet' in kwargs:
+        s = round(float(kwargs['feet']))
+    elif 'head' in kwargs:
+        s = round(float(kwargs['head'])) - 1900
+    else:
+        raise ValueError("No 'feet' nor 'head' given.")
+    fractions = [(0.148*f, (s + 0, s + 450)),  # l. legs, 14.7% from 0--450 mm
+                 (0.222*f, (s + 450, s + 1000)),  # upper legs
+                 (0.074*f, (s + 1000, s + 1180)),  # hands
+                 (0.408*f, (s + 1000, s + 1700)),  # torso
+                 (0.074*f, (s + 1200, s + 1700)),  # arms
+                 (0.074*f, (s + 1220, s + 1900))]  # head
+    return [DistLoad(force=i[0], pos=i[1]) for i in fractions]  # }}}
 
 
 class Load(object):  # {{{
@@ -232,63 +301,7 @@ class TriangleLoad(DistLoad):  # {{{
         return np.cumsum(dv)  # }}}
 
 
-def patientload(**kwargs):  # {{{
-    """
-    Returns a list of DistLoads that represent a patient
-    load according to IEC 60601 specs. For this calculation the patient is
-    assumed to be lying with his feet pointing to the origin.
-
-    Named arguments:
-        kg: Mass of the patient in kg.
-        force: The gravitational force of the patient in N. Note that this
-            should be a *negative* number.
-        feet: Location of the patient's feet in mm.
-        head: Location of the patient's head in mm. This is an alternative for
-            'feet'. Either 'feet' or 'head' must be present or a ValueError
-            will be raised.
-
-    Returns:
-        A list of DistLoads.
-    """
-    f = _force(kwargs)
-    if 'feet' in kwargs:
-        s = round(float(kwargs['feet']))
-    elif 'head' in kwargs:
-        s = round(float(kwargs['head'])) - 1900
-    else:
-        raise ValueError("No 'feet' nor 'head' given.")
-    fractions = [(0.148*f, (s + 0, s + 450)),  # l. legs, 14.7% from 0--450 mm
-                 (0.222*f, (s + 450, s + 1000)),  # upper legs
-                 (0.074*f, (s + 1000, s + 1180)),  # hands
-                 (0.408*f, (s + 1000, s + 1700)),  # torso
-                 (0.074*f, (s + 1200, s + 1700)),  # arms
-                 (0.074*f, (s + 1220, s + 1900))]  # head
-    return [DistLoad(force=i[0], pos=i[1]) for i in fractions]  # }}}
-
-
-def interpolate(tuples):  # {{{
-    """
-    Interpolates between tuples.
-
-    Arguments:
-        tuples: list of 2-tuples
-
-    Returns:
-        a numpy array with interpolated values.
-    """
-    x = np.array([int(round(x)) for x, _ in tuples])
-    y = np.array([y for _, y in tuples])
-    startx, starty = x[0], y[0]
-    arrays = []
-    for dx, dy in zip(x[1:] - x[:-1], y[1:] - y[:-1]):
-        if dx > 0:
-            a = np.linspace(starty, starty + dy, num=dx+1, endpoint=True)
-            arrays.append(a[:-1])
-        startx += dx
-        starty += dy
-    arrays.append(np.array([y[-1]]))
-    return np.concatenate(arrays)  # }}}
-
+# Everything below is internal to the module.
 
 def _force(kwargs):  # {{{
     """

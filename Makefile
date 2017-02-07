@@ -40,4 +40,4 @@ clean::
 	rm -rf dist build backup-*.tar.gz *.py[co] MANIFEST tests/*.d
 
 tests::
-	py.test-3.5 -v tests
+	py.test-3.6 -v tests
