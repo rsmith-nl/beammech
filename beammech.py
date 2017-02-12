@@ -1,7 +1,7 @@
 # file: beammech.py
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2015 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2017-02-07 20:40:50 +0100
+# Last modified: 2017-02-12 12:03:31 +0100
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -113,6 +113,33 @@ def solve(problem):  # {{{
     problem['a'] = np.arctan(dy)
     problem['etop'], problem['ebot'] = etop, ebot
     return problem  # }}}
+
+
+def save(problem, path):
+    """
+    Save the data from a solved problem to a file as columns of numbers.
+    It writes the following columns to the file:
+    * position
+    * shear force
+    * bending moment
+    * displacement
+    * strain at top
+    * strain at bottom
+
+    Arguments:
+        problem: Solved problem dictionary.
+        path: Location where the data should be solved
+
+    Raises:
+        ValueError if the problem has not been solved yet.
+    """
+    if 'y' not in problem:
+        raise ValueError('problem has not solved')
+    data = np.vstack((np.arange(problem['length']+1),
+                      problem['D'], problem['M'],
+                      problem['y'], problem['etop'],
+                      problem['ebot'])).T
+    np.savetxt(path, data, fmt='%g')
 
 
 def interpolate(tuples):  # {{{
