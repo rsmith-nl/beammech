@@ -1,7 +1,7 @@
 # file: beammech.py
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2015 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2017-07-17 20:54:33 +0200
+# Last modified: 2017-07-17 20:58:06 +0200
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -256,7 +256,7 @@ def patientload(**kwargs):  # {{{
     Returns:
         A list of DistLoads.
     """
-    f = _force(kwargs)
+    f = _force(**kwargs)
     if 'feet' in kwargs:
         s = round(float(kwargs['feet']))
     elif 'head' in kwargs:
@@ -290,7 +290,7 @@ class Load(object):  # {{{
             >>> str(Load(kg=150, pos=100))
             'point load of -1471.5 N @ 100 mm.'
         """
-        self.size = _force(kwargs)
+        self.size = _force(**kwargs)
         self.pos = round(float(kwargs['pos']))
 
     def __str__(self):
@@ -335,8 +335,8 @@ class DistLoad(Load):  # {{{
             pos: 2-tuple containing the borders of the distributed load.
                 You can use this instead of start and end.
         """
-        size = _force(kwargs)
-        self.start, self.end = _start_end(kwargs)
+        size = _force(**kwargs)
+        self.start, self.end = _start_end(**kwargs)
         if self.start > self.end:
             self.start, self.end = self.end, self.start
         Load.__init__(self, force=size, pos=float(self.start+self.end)/2)
