@@ -3,7 +3,7 @@
 #
 # Author: R.F. Smith <rsmith@xs4all.nl>
 # Created: 2015-08-24 01:34:26 +0200
-# Last modified: 2016-06-09 23:33:20 +0200
+# Last modified: 2017-07-17 10:42:51 +0200
 
 """
 Tests for Load classes and load cases.
@@ -89,7 +89,7 @@ def test_supported_central_pointload():  # {{{1
                'supports': (0, L), 'shear': False,
                'loads': bm.Load(force=P, pos=L/2)}
     bm.solve(problem)
-    deflection_bm = problem['y'][L/2]
+    deflection_bm = problem['y'][int(L/2)]
     deflection_formula = P*L**3/(48*E*I)
     reldiff = abs((deflection_bm-deflection_formula)/deflection_formula)
     assert reldiff < 0.005
@@ -102,7 +102,7 @@ def test_supported_distributed():  # {{{1
                'supports': (0, L), 'shear': False,
                'loads': bm.DistLoad(force=P, start=0, end=L)}
     bm.solve(problem)
-    deflection_bm = problem['y'][L/2]
+    deflection_bm = problem['y'][int(L/2)]
     deflection_formula = 5*P*L**3/(384*E*I)
     reldiff = abs((deflection_bm-deflection_formula)/deflection_formula)
     assert reldiff < 0.005
@@ -130,7 +130,7 @@ def test_supported_pointloads():  # {{{1
                          bm.Load(force=P, pos=L/2),
                          bm.Load(force=P, pos=3*L/4)]}
     bm.solve(problem)
-    deflection_bm = problem['y'][L/2]
+    deflection_bm = problem['y'][int(L/2)]
     deflection_formula = 19*P*L**3/(384*E*I)
     reldiff = abs((deflection_bm-deflection_formula)/deflection_formula)
     assert reldiff < 0.005
@@ -153,11 +153,11 @@ def test_gvepet1():  # {{{1
                'supports': (0, L), 'shear': False,
                'loads': bm.Load(force=P, pos=L/2)}
     bm.solve(problem)
-    bending_bm = problem['y'][L/2]
+    bending_bm = problem['y'][int(L/2)]
     bending_formula = P*L**3/(48*E*I)
     problem["shear"] = True
     bm.solve(problem)
-    total_bm = problem['y'][L/2]
+    total_bm = problem['y'][int(L/2)]
     total_formula = bending_formula + (1.5*P/2*L/2)/(G*A)
     reldiff = abs((bending_bm-bending_formula)/bending_formula)
     assert reldiff < 0.005
@@ -182,11 +182,11 @@ def test_cvepet3():  # {{{1
                'supports': (0, L), 'shear': False,
                'loads': bm.Load(force=P, pos=L/2)}
     bm.solve(problem)
-    bending_bm = problem['y'][L/2]
+    bending_bm = problem['y'][int(L/2)]
     bending_formula = P*L**3/(48*E*I)
     problem["shear"] = True
     bm.solve(problem)
-    total_bm = problem['y'][L/2]
+    total_bm = problem['y'][int(L/2)]
     total_formula = bending_formula + (1.5*P/2*L/2)/(G*A)
     reldiff = abs((bending_bm-bending_formula)/bending_formula)
     assert reldiff < 0.005

@@ -1,7 +1,7 @@
 # file: beammech.py
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2015 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2017-02-12 12:03:31 +0100
+# Last modified: 2017-07-17 10:27:51 +0200
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -28,7 +28,7 @@
 import numpy as np
 import math
 
-__version__ = '0.10.3'
+__version__ = '0.11.0'
 
 
 def solve(problem):  # {{{
@@ -140,6 +140,50 @@ def save(problem, path):
                       problem['y'], problem['etop'],
                       problem['ebot'])).T
     np.savetxt(path, data, fmt='%g')
+
+
+def EI(sections, normal):
+    """Calculate the bending stiffnes of a cross-section.
+
+    The cross-section is composed out of rectangular nonoverlapping sections
+    that can have different Young's moduli.
+
+    Each section is represented by a 4-tuple (width, height, offset, E).
+    The offset is the distance from the top of the section to the top of the
+    highest section. This should always be a positive value.
+    E is the Young's modulus of the material of this section.
+
+    Aruments:
+        sections: Iterable of section properties.
+        normal: The Young's modulus to which the total cross-section will be
+            normalized.
+
+    Returns:
+        Tuple of EI, top and bottom. Top and bottom are with respect to the
+        neutral line.
+    """
+    normalized = tuple((w*E/normal, h, offs) for w, h, offs, E in sections)
+    A = sum(w*h for w, h, _ in normalized)
+    S = sum(w*h*(offs+h/2) for w, h, offs in normalized)
+    yn = S/A
+    # Find the geometry that straddles yn.
+    to_split = tuple(g for g in normalized if g[2] < yn and g[1] + g[2] > yn)
+    geom = tuple(g for g in normalized if g not in to_split)
+    # split the geometry.
+    # The new tuple has the format (width, height, top, bottom)
+    new_geom = []
+    for w, h, offs in to_split:
+        h1 = yn - offs
+        h2 = h - h1
+        new_geom.append((w, h1, h1, 0))
+        new_geom.append((w, h2, 0, -h2))
+    # Convert the remaining geometry
+    for w, h, offs in geom:
+        new_geom.append((w, h, yn - offs, yn - offs - h))
+    EI = normal * sum(w*(top**3 - bot**3)/3 for w, h, top, bot in new_geom)
+    top = max(t for _, _, t, _ in new_geom)
+    bot = min(b for _, _, _, b in new_geom)
+    return EI, top, bot
 
 
 def interpolate(tuples):  # {{{
