@@ -3,7 +3,7 @@
 #
 # Author: R.F. Smith <rsmith@xs4all.nl>
 # Created: 2017-07-17 10:29:56 +0200
-# Last modified: 2017-07-17 11:09:14 +0200
+# Last modified: 2017-07-17 21:33:08 +0200
 
 """Tests for EI berekening."""
 
@@ -23,6 +23,20 @@ def test_simple():
     assert bot == -H/2
 
 
+def test_offsets():
+    """Offsets should not influence the result."""
+    B = 100
+    H = 20
+    E = 210000
+    sections = ((B, H, 0, E),)
+    sections2 = ((B, H, 12.435, E),)
+    EI, top, bot = bm.EI(sections, E)
+    EI2, top2, bot2 = bm.EI(sections2, E)
+    assert 0.99 < EI/EI2 < 1.01
+    assert 0.99 < top/top2 < 1.01
+    assert 0.99 < bot/bot2 < 1.01
+
+
 def test_simple_sw():
     """Simple sandwich"""
     B = 100
@@ -36,6 +50,17 @@ def test_simple_sw():
     assert 0.99 < EI/EIc < 1.01
     assert top == H/2
     assert bot == -H/2
+
+
+def test_uneven_sw():
+    """Sandwich with different top and bottom layer width."""
+    B = 100
+    t = 1
+    H = 30
+    E = 20000
+    sections = ((2*B, t, 0, E), (B, t, H-t, E))
+    EI, top, bot = bm.EI(sections, E)
+    assert 1.95 < abs(bot)/top < 1.96
 
 
 def test_sw2():
