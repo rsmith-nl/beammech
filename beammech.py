@@ -1,7 +1,7 @@
 # file: beammech.py
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2015 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2017-07-17 10:27:51 +0200
+# Last modified: 2017-07-17 20:54:33 +0200
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -115,7 +115,7 @@ def solve(problem):  # {{{
     return problem  # }}}
 
 
-def save(problem, path):
+def save(problem, path):  # {{{
     """
     Save the data from a solved problem to a file as columns of numbers.
     It writes the following columns to the file:
@@ -142,7 +142,7 @@ def save(problem, path):
     np.savetxt(path, data, fmt='%g')
 
 
-def EI(sections, normal):
+def EI(sections, normal):  # {{{
     """Calculate the bending stiffnes of a cross-section.
 
     The cross-section is composed out of rectangular nonoverlapping sections
@@ -153,7 +153,7 @@ def EI(sections, normal):
     highest section. This should always be a positive value.
     E is the Young's modulus of the material of this section.
 
-    Aruments:
+    Arguments:
         sections: Iterable of section properties.
         normal: The Young's modulus to which the total cross-section will be
             normalized.
@@ -161,6 +161,23 @@ def EI(sections, normal):
     Returns:
         Tuple of EI, top and bottom. Top and bottom are with respect to the
         neutral line.
+
+    Examples:
+        >>> E = 210000
+        >>> B = 100
+        >>> H = 20
+        >>> sections = ((B, H, 0, E),)
+        >>> EI(sections, E)
+        (14000000000.000002, 10.0, -10.0)
+
+        >>> B = 100
+        >>> h = 18
+        >>> t = 1
+        >>> H = h + 2 * t
+        >>> E = 210000
+        >>> sections = ((B, t, 0, E), (B, t, h+t, E))
+        >>> EI(sections, E)
+        (3794000000.0000005, 10.0, -10.0)
     """
     normalized = tuple((w*E/normal, h, offs) for w, h, offs, E in sections)
     A = sum(w*h for w, h, _ in normalized)
@@ -268,6 +285,10 @@ class Load(object):  # {{{
             kg: Weight of a mass in kg, alternative for force. N.B: a weight
                 of 1 kg will translate into a force of -9.81 N.
             pos: Distance from the origin to the location of the force in mm.
+
+        Examples:
+            >>> str(Load(kg=150, pos=100))
+            'point load of -1471.5 N @ 100 mm.'
         """
         self.size = _force(kwargs)
         self.pos = round(float(kwargs['pos']))
@@ -374,12 +395,16 @@ class TriangleLoad(DistLoad):  # {{{
 
 # Everything below is internal to the module.
 
-def _force(kwargs):  # {{{
+def _force(**kwargs):  # {{{
     """
     Determine the force. See Load.__init__()
 
     Returns:
         The force as a float.
+
+    Examples:
+        >>> _force(kg=1)
+        -9.81
     """
     if 'force' in kwargs:
         force = float(kwargs['force'])
@@ -390,12 +415,18 @@ def _force(kwargs):  # {{{
     return force  # }}}
 
 
-def _start_end(kwargs):  # {{{
+def _start_end(**kwargs):  # {{{
     """
     Validate the position arguments. See DistLoad.__init_()
 
     Returns:
         Postition as a (start, end) tuple
+
+    Examples:
+        >>> _start_end(pos=(100, 200))
+        (100, 200)
+        >>> _start_end(start=100, end=200)
+        (100, 200)
     """
     if 'pos' in kwargs:
         p = kwargs['pos']
