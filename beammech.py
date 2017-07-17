@@ -1,7 +1,7 @@
 # file: beammech.py
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2015 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2017-07-17 20:58:06 +0200
+# Last modified: 2017-07-17 21:12:03 +0200
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -198,8 +198,8 @@ def EI(sections, normal):  # {{{
     for w, h, offs in geom:
         new_geom.append((w, h, yn - offs, yn - offs - h))
     EI = normal * sum(w*(top**3 - bot**3)/3 for w, h, top, bot in new_geom)
-    top = max(t for _, _, t, _ in new_geom)
-    bot = min(b for _, _, _, b in new_geom)
+    top = max(g[-2] for g in new_geom)
+    bot = min(g[-1] for g in new_geom)
     return EI, top, bot
 
 
