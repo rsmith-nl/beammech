@@ -1,7 +1,7 @@
 # file: beammech.py
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2015 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2017-07-17 21:12:03 +0200
+# Last modified: 2017-08-03 23:45:26 +0200
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -25,8 +25,10 @@
 
 """Module for stiffness and strength calculations of beams."""
 
-import numpy as np
+from datetime import datetime
+from os.path import basename
 import math
+import numpy as np
 
 __version__ = '0.11.0'
 
@@ -139,7 +141,9 @@ def save(problem, path):  # {{{
                       problem['D'], problem['M'],
                       problem['y'], problem['etop'],
                       problem['ebot'])).T
-    np.savetxt(path, data, fmt='%g')
+    hs = 'file: {}\ngenerated: {}\nx D M y et eb'
+    h = hs.format(basename(path), str(datetime.now())[:-7])
+    np.savetxt(path, data, fmt='%g', header=h)  # }}}
 
 
 def EI(sections, normal):  # {{{
@@ -200,7 +204,7 @@ def EI(sections, normal):  # {{{
     EI = normal * sum(w*(top**3 - bot**3)/3 for w, h, top, bot in new_geom)
     top = max(g[-2] for g in new_geom)
     bot = min(g[-1] for g in new_geom)
-    return EI, top, bot
+    return EI, top, bot  # }}}
 
 
 def interpolate(tuples):  # {{{
