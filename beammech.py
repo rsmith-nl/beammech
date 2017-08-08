@@ -1,7 +1,7 @@
 # file: beammech.py
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2015 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2017-08-03 23:45:26 +0200
+# Last modified: 2017-08-09 01:16:07 +0200
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@ from os.path import basename
 import math
 import numpy as np
 
-__version__ = '0.11.0'
+__version__ = '0.12.0'
 
 
 def solve(problem):  # {{{
@@ -65,6 +65,8 @@ def solve(problem):  # {{{
             at each mm of the beam.
         * 'M': A numpy array containing the bending moment in the cross-section
             at each mm of the beam.
+        * 'dy': A numpy array containing the deflection angle at each mm
+            of the beam.
         * 'y': A numpy array containing the vertical displacement at each mm
             of the beam.
         * 'etop': A numpy array containing the strain at the top of the
@@ -80,6 +82,7 @@ def solve(problem):  # {{{
     loads = [ld for ld in loads]  # make a copy since we modifiy it!
     EI, GA, top, bot = _check_arrays(problem)
     shear = _check_shear(problem)
+    # Calculate support loads.
     moment = sum([ld.moment(s1) for ld in loads])
     if s2:
         R2 = Load(force=-moment/(s2-s1), pos=s2)
@@ -89,8 +92,14 @@ def solve(problem):  # {{{
     # Force equilibrium
     R1 = Load(force=-sum([ld.size for ld in loads]), pos=s1)
     loads.append(R1)
+    # Calculate shear force
     D = np.sum(np.array([ld.shear(length) for ld in loads]), axis=0)
+    # Calculate bending moment
     M = np.cumsum(D)
+    Mstep = np.sum(np.array([
+        ld.moment_array(length) for ld in loads if
+        isinstance(ld, MomentLoad)]), axis=0)
+    M += Mstep
     if s2 is None:
         M -= M[-1]
     ddy_b = M/EI
@@ -111,7 +120,7 @@ def solve(problem):  # {{{
         dy += delta
         y = y + slope
     problem['D'], problem['M'] = D, M
-    problem['y'], problem['R'] = y, (R1, R2)
+    problem['dy'], problem['y'], problem['R'] = dy, y, (R1, R2)
     problem['a'] = np.arctan(dy)
     problem['etop'], problem['ebot'] = etop, ebot
     return problem  # }}}
@@ -127,6 +136,7 @@ def save(problem, path):  # {{{
     * displacement
     * strain at top
     * strain at bottom
+    * deflection angle
 
     Arguments:
         problem: Solved problem dictionary.
@@ -140,8 +150,8 @@ def save(problem, path):  # {{{
     data = np.vstack((np.arange(problem['length']+1),
                       problem['D'], problem['M'],
                       problem['y'], problem['etop'],
-                      problem['ebot'])).T
-    hs = 'file: {}\ngenerated: {}\nx D M y et eb'
+                      problem['ebot'], problem['dy'])).T
+    hs = 'file: {}\ngenerated: {}\nx D M y et eb dy'
     h = hs.format(basename(path), str(datetime.now())[:-7])
     np.savetxt(path, data, fmt='%g', header=h)  # }}}
 
@@ -318,6 +328,54 @@ class Load(object):  # {{{
         """
         rv = np.zeros(length+1)
         rv[self.pos:] = self.size
+        return rv  # }}}
+
+
+class MomentLoad(Load):  # {{{
+
+    def __init__(self, moment, pos):
+        """Create a local bending moment load.
+
+        Arguments:
+            moment: bending moment in Nmm
+            pos: position of the bending moment.
+        """
+        self.m = float(moment)
+        Load.__init__(self, force=0, pos=pos)
+
+    def __str__(self):
+        return 'moment of {} Nmm @ {}'.format(self.m, self.pos)
+
+    def moment(self, pos):
+        """
+        Returns the bending moment that the load exerts at pos.
+        """
+        return self.m
+
+    def shear(self, length):
+        """
+        Return the contribution of the load to the shear.
+
+        Arguments:
+            length: length of the array to return.
+
+        Returns:
+            An array that contains the contribution of this load.
+        """
+        return np.zeros(length+1)
+
+    def moment_array(self, length):
+        """
+        Return the contribution of the load to the bending moment.
+
+        Arguments:
+            length: length of the array to return.
+
+        Returns:
+            An array that contains the contribution of this load.
+        """
+        rv = np.zeros(length+1)
+        rv[self.pos:] = -self.m
         return rv  # }}}
 
 
