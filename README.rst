@@ -114,7 +114,7 @@ variation in beam geometry.
     E = 69500  # Young's modulus of aluminium [MPa]
     G = 26000  # shear modulus of aluminium [MPa]
     B, H = 30, 3
-    I, A = B*H**3/12, G*H
+    I, A = B*H**3/12, B*H
     n = beam['length']+1
     beam['EI'] = np.ones(n)*E*I
     beam['GA'] = np.ones(n)*G*A
