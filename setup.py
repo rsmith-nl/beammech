@@ -4,16 +4,17 @@
 #
 # Author: R.F. Smith <rsmith@xs4all.nl>
 # Created: 2015-04-28 19:45:39 +0200
-# Last modified: 2015-09-20 16:57:35 +0200
+# Last modified: 2018-04-02 12:12:39 +0200
 
 from distutils.core import setup
+from beammech import __version__
 
 with open('README.rst') as file:
     ld = file.read()
 
 
 setup(name='beammech',
-      version='0.10.1',
+      version=__version__,
       license='BSD',
       description='Module to evaluate loaded beams.',
       author='Roland Smith', author_email='rsmith@xs4all.nl',
@@ -26,8 +27,9 @@ setup(name='beammech',
                    'Intended Audience :: Manufacturing',
                    'License :: OSI Approved :: BSD License',
                    'Operating System :: OS Independent',
-                   'Programming Language :: Python :: 2.7',
                    'Programming Language :: Python :: 3.4',
+                   'Programming Language :: Python :: 3.5',
+                   'Programming Language :: Python :: 3.6',
                    'Topic :: Scientific/Engineering'
                    ],
       long_description=ld
