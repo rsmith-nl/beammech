@@ -22,7 +22,6 @@
 # LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 """Module for stiffness and strength calculations of beams."""
 
 from datetime import datetime
@@ -85,7 +84,7 @@ def solve(problem):  # {{{
     # Calculate support loads.
     moment = sum([ld.moment(s1) for ld in loads])
     if s2:
-        R2 = Load(force=-moment/(s2-s1), pos=s2)
+        R2 = Load(force=-moment / (s2 - s1), pos=s2)
         loads.append(R2)
     else:  # clamped at x = 0
         R2 = -moment
@@ -96,17 +95,17 @@ def solve(problem):  # {{{
     D = np.sum(np.array([ld.shear(length) for ld in loads]), axis=0)
     # Calculate bending moment
     M = np.cumsum(D)
-    Mstep = np.sum(np.array([
-        ld.moment_array(length) for ld in loads if
-        isinstance(ld, MomentLoad)]), axis=0)
+    Mstep = np.sum(
+        np.array([ld.moment_array(length) for ld in loads if isinstance(ld, MomentLoad)]), axis=0
+    )
     M += Mstep
     if s2 is None:
         M -= M[-1]
-    ddy_b = M/EI
-    etop, ebot = -top*ddy_b, -bot*ddy_b
+    ddy_b = M / EI
+    etop, ebot = -top * ddy_b, -bot * ddy_b
     dy = np.cumsum(ddy_b)
     if shear:
-        dy += -1.5*D/GA  # shear
+        dy += -1.5 * D / GA  # shear
     y = np.cumsum(dy)
     if s2:
         # First, translate the whole list so that the value at the
@@ -114,9 +113,8 @@ def solve(problem):  # {{{
         y = y - y[s1]
         # Then rotate around the anchor so that the deflection at the other
         # support is also 0.
-        delta = -y[s2]/math.fabs(s1-s2)
-        slope = np.concatenate((np.arange(-s1, 1, 1),
-                                np.arange(1, len(y)-s1)))*delta
+        delta = -y[s2] / math.fabs(s1 - s2)
+        slope = np.concatenate((np.arange(-s1, 1, 1), np.arange(1, len(y) - s1))) * delta
         dy += delta
         y = y + slope
     problem['D'], problem['M'] = D, M
@@ -147,10 +145,12 @@ def save(problem, path):  # {{{
     """
     if 'y' not in problem:
         raise ValueError('problem has not solved')
-    data = np.vstack((np.arange(problem['length']+1),
-                      problem['D'], problem['M'],
-                      problem['y'], problem['etop'],
-                      problem['ebot'], problem['dy'])).T
+    data = np.vstack(
+        (
+            np.arange(problem['length'] + 1), problem['D'], problem['M'], problem['y'],
+            problem['etop'], problem['ebot'], problem['dy']
+        )
+    ).T
     hs = 'file: {}\ngenerated: {}\nx D M y et eb dy'
     h = hs.format(basename(path), str(datetime.now())[:-7])
     np.savetxt(path, data, fmt='%g', header=h)  # }}}
@@ -193,10 +193,10 @@ def EI(sections, normal):  # {{{
         >>> EI(sections, E)
         (3794000000.0000005, 10.0, -10.0)
     """
-    normalized = tuple((w*E/normal, h, offs) for w, h, offs, E in sections)
-    A = sum(w*h for w, h, _ in normalized)
-    S = sum(w*h*(offs+h/2) for w, h, offs in normalized)
-    yn = S/A
+    normalized = tuple((w * E / normal, h, offs) for w, h, offs, E in sections)
+    A = sum(w * h for w, h, _ in normalized)
+    S = sum(w * h * (offs + h / 2) for w, h, offs in normalized)
+    yn = S / A
     # Find the geometry that straddles yn.
     to_split = tuple(g for g in normalized if g[2] < yn and g[1] + g[2] > yn)
     geom = tuple(g for g in normalized if g not in to_split)
@@ -211,7 +211,7 @@ def EI(sections, normal):  # {{{
     # Convert the remaining geometry
     for w, h, offs in geom:
         new_geom.append((w, h, yn - offs, yn - offs - h))
-    EI = normal * sum(w*(top**3 - bot**3)/3 for w, h, top, bot in new_geom)
+    EI = normal * sum(w * (top**3 - bot**3) / 3 for w, h, top, bot in new_geom)
     top = max(g[-2] for g in new_geom)
     bot = min(g[-1] for g in new_geom)
     return EI, top, bot  # }}}
@@ -244,7 +244,7 @@ def interpolate(tuples):  # {{{
     arrays = []
     for dx, dy in zip(x[1:] - x[:-1], y[1:] - y[:-1]):
         if dx > 0:
-            a = np.linspace(starty, starty + dy, num=dx+1, endpoint=True)
+            a = np.linspace(starty, starty + dy, num=dx + 1, endpoint=True)
             arrays.append(a[:-1])
         startx += dx
         starty += dy
@@ -277,12 +277,14 @@ def patientload(**kwargs):  # {{{
         s = round(float(kwargs['head'])) - 1900
     else:
         raise ValueError("No 'feet' nor 'head' given.")
-    fractions = [(0.148*f, (s + 0, s + 450)),  # l. legs, 14.7% from 0--450 mm
-                 (0.222*f, (s + 450, s + 1000)),  # upper legs
-                 (0.074*f, (s + 1000, s + 1180)),  # hands
-                 (0.408*f, (s + 1000, s + 1700)),  # torso
-                 (0.074*f, (s + 1200, s + 1700)),  # arms
-                 (0.074*f, (s + 1220, s + 1900))]  # head
+    fractions = [
+        (0.148 * f, (s + 0, s + 450)),  # l. legs, 14.7% from 0--450 mm
+        (0.222 * f, (s + 450, s + 1000)),  # upper legs
+        (0.074 * f, (s + 1000, s + 1180)),  # hands
+        (0.408 * f, (s + 1000, s + 1700)),  # torso
+        (0.074 * f, (s + 1200, s + 1700)),  # arms
+        (0.074 * f, (s + 1220, s + 1900))
+    ]  # head
     return [DistLoad(force=i[0], pos=i[1]) for i in fractions]  # }}}
 
 
@@ -314,7 +316,7 @@ class Load(object):  # {{{
         """
         Returns the bending moment that the load exerts at pos.
         """
-        return (self.pos-pos)*self.size
+        return (self.pos - pos) * self.size
 
     def shear(self, length):
         """
@@ -326,7 +328,7 @@ class Load(object):  # {{{
         Returns:
             An array that contains the contribution of this load.
         """
-        rv = np.zeros(length+1)
+        rv = np.zeros(length + 1)
         rv[self.pos:] = self.size
         return rv  # }}}
 
@@ -362,7 +364,7 @@ class MomentLoad(Load):  # {{{
         Returns:
             An array that contains the contribution of this load.
         """
-        return np.zeros(length+1)
+        return np.zeros(length + 1)
 
     def moment_array(self, length):
         """
@@ -374,7 +376,7 @@ class MomentLoad(Load):  # {{{
         Returns:
             An array that contains the contribution of this load.
         """
-        rv = np.zeros(length+1)
+        rv = np.zeros(length + 1)
         rv[self.pos:] = -self.m
         return rv  # }}}
 
@@ -401,7 +403,7 @@ class DistLoad(Load):  # {{{
         self.start, self.end = _start_end(**kwargs)
         if self.start > self.end:
             self.start, self.end = self.end, self.start
-        Load.__init__(self, force=size, pos=float(self.start+self.end)/2)
+        Load.__init__(self, force=size, pos=float(self.start + self.end) / 2)
 
     def __str__(self):
         r = "constant distributed load of {} N @ {}--{} mm."
@@ -409,10 +411,9 @@ class DistLoad(Load):  # {{{
 
     def shear(self, length):
         rem = length + 1 - self.end
-        d = self.end-self.start
+        d = self.end - self.start
         q = self.size
-        parts = (np.zeros(self.start), np.linspace(0, q, d),
-                 np.ones(rem)*q)
+        parts = (np.zeros(self.start), np.linspace(0, q, d), np.ones(rem) * q)
         return np.concatenate(parts)  # }}}
 
 
@@ -435,8 +436,8 @@ class TriangleLoad(DistLoad):  # {{{
         DistLoad.__init__(self, **kwargs)
         length = abs(self.start - self.end)
         pos = (self.start, self.end)
-        self.pos = round(min(pos)) + 2.0*length/3.0
-        self.q = 2*self.size/length
+        self.pos = round(min(pos)) + 2.0 * length / 3.0
+        self.q = 2 * self.size / length
 
     def __str__(self):
         r = "linearly {} distributed load of {} N @ {}--{} mm."
@@ -448,14 +449,16 @@ class TriangleLoad(DistLoad):  # {{{
 
     def shear(self, length):
         rem = length + 1 - self.end
-        parts = (np.zeros(self.start),
-                 np.linspace(0, self.q, self.end-self.start),
-                 np.ones(rem)*self.q)
+        parts = (
+            np.zeros(self.start), np.linspace(0, self.q, self.end - self.start),
+            np.ones(rem) * self.q
+        )
         dv = np.concatenate(parts)
         return np.cumsum(dv)  # }}}
 
 
 # Everything below is internal to the module.
+
 
 def _force(**kwargs):  # {{{
     """
@@ -471,7 +474,7 @@ def _force(**kwargs):  # {{{
     if 'force' in kwargs:
         force = float(kwargs['force'])
     elif 'kg' in kwargs:
-        force = -9.81*float(kwargs['kg'])
+        force = -9.81 * float(kwargs['kg'])
     else:
         raise KeyError("No 'force' or 'kg' present")
     return force  # }}}

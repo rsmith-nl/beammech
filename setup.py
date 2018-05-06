@@ -12,25 +12,22 @@ from beammech import __version__
 with open('README.rst') as file:
     ld = file.read()
 
-
-setup(name='beammech',
-      version=__version__,
-      license='BSD',
-      description='Module to evaluate loaded beams.',
-      author='Roland Smith', author_email='rsmith@xs4all.nl',
-      url='http://rsmith.home.xs4all.nl/category/software.html',
-      requires=['numpy'],
-      py_modules=['beammech'],
-      classifiers=['Development Status :: 5 - Production/Stable',
-                   'Environment :: Console',
-                   'Intended Audience :: End Users/Desktop',
-                   'Intended Audience :: Manufacturing',
-                   'License :: OSI Approved :: BSD License',
-                   'Operating System :: OS Independent',
-                   'Programming Language :: Python :: 3.4',
-                   'Programming Language :: Python :: 3.5',
-                   'Programming Language :: Python :: 3.6',
-                   'Topic :: Scientific/Engineering'
-                   ],
-      long_description=ld
-      )
+setup(
+    name='beammech',
+    version=__version__,
+    license='BSD',
+    description='Module to evaluate loaded beams.',
+    author='Roland Smith',
+    author_email='rsmith@xs4all.nl',
+    url='http://rsmith.home.xs4all.nl/category/software.html',
+    requires=['numpy'],
+    py_modules=['beammech'],
+    classifiers=[
+        'Development Status :: 5 - Production/Stable', 'Environment :: Console',
+        'Intended Audience :: End Users/Desktop', 'Intended Audience :: Manufacturing',
+        'License :: OSI Approved :: BSD License', 'Operating System :: OS Independent',
+        'Programming Language :: Python :: 3.4', 'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6', 'Topic :: Scientific/Engineering'
+    ],
+    long_description=ld
+)
