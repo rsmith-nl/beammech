@@ -22,7 +22,7 @@ module.  That was the birth of beammech.py.
 Using beammech.py
 =================
 
-Currently, this module is being developed and tested in Python 3 only.
+Currently, this module is being developed and tested in Python 3.6+ only.
 
 This software uses *metric units* throughout.  Mass is in kg, forces are in N,
 and lengths in mm.  The accelleration of gravity is set at 9.81 m/s².  A

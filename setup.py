@@ -4,7 +4,7 @@
 #
 # Author: R.F. Smith <rsmith@xs4all.nl>
 # Created: 2015-04-28 19:45:39 +0200
-# Last modified: 2018-04-02 12:12:39 +0200
+# Last modified: 2018-07-08T10:35:04+0200
 
 from distutils.core import setup
 from beammech import __version__
@@ -26,8 +26,8 @@ setup(
         'Development Status :: 5 - Production/Stable', 'Environment :: Console',
         'Intended Audience :: End Users/Desktop', 'Intended Audience :: Manufacturing',
         'License :: OSI Approved :: BSD License', 'Operating System :: OS Independent',
-        'Programming Language :: Python :: 3.4', 'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6', 'Topic :: Scientific/Engineering'
+        'Programming Language :: Python :: 3.6', 'Programming Language :: Python :: 3.7',
+        'Topic :: Scientific/Engineering'
     ],
     long_description=ld
 )

@@ -1,7 +1,7 @@
 # file: beammech.py
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2015 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2017-08-09 01:16:07 +0200
+# Last modified: 2018-07-08T10:33:28+0200
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -29,7 +29,7 @@ from os.path import basename
 import math
 import numpy as np
 
-__version__ = '0.12.0'
+__version__ = '0.12'
 
 
 def solve(problem):  # {{{
@@ -151,8 +151,9 @@ def save(problem, path):  # {{{
             problem['etop'], problem['ebot'], problem['dy']
         )
     ).T
-    hs = 'file: {}\ngenerated: {}\nx D M y et eb dy'
-    h = hs.format(basename(path), str(datetime.now())[:-7])
+    p = basename(path)
+    d = str(datetime.now())[:-7]
+    h = f'file: {p}\ngenerated: {d}\nx D M y et eb dy'
     np.savetxt(path, data, fmt='%g', header=h)  # }}}
 
 
@@ -310,7 +311,7 @@ class Load(object):  # {{{
         self.pos = round(float(kwargs['pos']))
 
     def __str__(self):
-        return "point load of {} N @ {} mm.".format(self.size, self.pos)
+        return f"point load of {self.size} N @ {self.pos} mm."
 
     def moment(self, pos):
         """
@@ -346,7 +347,7 @@ class MomentLoad(Load):  # {{{
         Load.__init__(self, force=0, pos=pos)
 
     def __str__(self):
-        return 'moment of {} Nmm @ {}'.format(self.m, self.pos)
+        return f'moment of {self.m} Nmm @ {self.pos}'
 
     def moment(self, pos):
         """
@@ -406,8 +407,7 @@ class DistLoad(Load):  # {{{
         Load.__init__(self, force=size, pos=float(self.start + self.end) / 2)
 
     def __str__(self):
-        r = "constant distributed load of {} N @ {}--{} mm."
-        return r.format(self.size, self.start, self.end)
+        return f"constant distributed load of {self.size} N @ {self.start}--{self.end} mm."
 
     def shear(self, length):
         rem = length + 1 - self.end
@@ -440,12 +440,11 @@ class TriangleLoad(DistLoad):  # {{{
         self.q = 2 * self.size / length
 
     def __str__(self):
-        r = "linearly {} distributed load of {} N @ {}--{} mm."
         if self.start < self.end:
-            direction = 'ascending'
+            d = 'ascending'
         else:
-            direction = 'descending'
-        return r.format(direction, self.size, self.start, self.end)
+            d = 'descending'
+        return f"linearly {d} distributed load of {self.size} N @ {self.start}--{self.end} mm."
 
     def shear(self, length):
         rem = length + 1 - self.end
@@ -563,13 +562,12 @@ def _check_arrays(problem):  # {{{
         The modified EI, GA, top and bottom arrays.
     """
     L = problem['length']
-    t = "Length of array {} ({}) doesn't match beam length ({}) + 1 ."
     for key in ['EI', 'GA', 'top', 'bot']:
         if not isinstance(problem[key], np.ndarray):
             problem[key] = np.array(problem[key])
         la = len(problem[key])
         if la != L + 1:
-            raise ValueError(t.format(key, la, L))
+            raise ValueError(f"Length of array {key} ({la}) doesn't match beam length ({L}) + 1 .")
     return problem['EI'], problem['GA'], problem['top'], problem['bot']  # }}}
 
 
