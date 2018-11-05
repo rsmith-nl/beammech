@@ -42,13 +42,13 @@ clean::
 	rm -rf dist build backup-*.tar.gz *.py[co] MANIFEST tests/*.d
 
 check::
-	pylama -i E501 beammech.py tests/*.py
+	pylama -i E501 ${MOD}.py tests/*.py
 
 tags::
 	exctags -R
 
 format::
-	yapf-3.7 -i beammech.py tests/*.py
+	yapf-3.7 -i ${MOD}.py tests/*.py
 
 tests::
 	pytest-3.7 -v tests
