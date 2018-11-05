@@ -33,13 +33,13 @@ deinstall::
 	fi
 	rm -f ${PYSITE}/${MOD}.py
 
-dist:
 # Create distribution file. Use zip format to make deployment easier on windoze.
+dist:
 	python3 -B setup.py sdist --format=zip
 	rm -f MANIFEST
 
 clean::
-	rm -rf dist build backup-*.tar.gz *.py[co] MANIFEST tests/*.d
+	rm -rf dist build backup-*.tar.gz MANIFEST __pycache__
 
 check::
 	pylama -i E501 ${MOD}.py tests/*.py
