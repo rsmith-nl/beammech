@@ -1,4 +1,4 @@
-.PHONY: all install tests dist clean backup deinstall check tags
+.PHONY: all install tests dist clean backup deinstall check tags format
 .SUFFIXES: .ps .pdf .py
 
 MOD = beammech
@@ -13,6 +13,7 @@ all::
 	@echo '* clean'
 	@echo '* check'
 	@echo '* tags'
+	@echo '* format'
 
 PYSITE!=python3 -B -c 'import site; print(site.getsitepackages()[0])'
 
@@ -45,6 +46,9 @@ check::
 
 tags::
 	exctags -R
+
+format::
+	yapf-3.7 -i beammech.py tests/*.py
 
 tests::
 	pytest-3.7 -v tests

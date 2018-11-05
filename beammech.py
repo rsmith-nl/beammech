@@ -93,8 +93,7 @@ def solve(length, supports, loads, EI, GA, top, bottom, shear):  # {{{
     # Calculate bending moment
     M = np.cumsum(D)
     Mstep = np.sum(
-        np.array([ld.moment_array(length) for ld in loads if
-                  isinstance(ld, MomentLoad)]), axis=0
+        np.array([ld.moment_array(length) for ld in loads if isinstance(ld, MomentLoad)]), axis=0
     )
     M += Mstep
     if s2 is None:
