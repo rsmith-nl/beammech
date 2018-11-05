@@ -1,4 +1,4 @@
-.PHONY: all install tests dist clean backup deinstall check
+.PHONY: all install tests dist clean backup deinstall check tags
 .SUFFIXES: .ps .pdf .py
 
 MOD = beammech
@@ -12,6 +12,7 @@ all::
 	@echo '* dist'
 	@echo '* clean'
 	@echo '* check'
+	@echo '* tags'
 
 PYSITE!=python3 -B -c 'import site; print(site.getsitepackages()[0])'
 
@@ -39,5 +40,11 @@ dist:
 clean::
 	rm -rf dist build backup-*.tar.gz *.py[co] MANIFEST tests/*.d
 
+check::
+	pylama -i E501 beammech.py tests/*.py
+
+tags::
+	exctags -R
+
 tests::
-	py.test-3.6 -v tests
+	pytest-3.7 -v tests

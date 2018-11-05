@@ -9,3 +9,4 @@ build/
 __pycache__/
 .ropeproject/
 .cache/
+.pytest_cache/

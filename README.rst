@@ -41,8 +41,8 @@ supports are the initial parameters.
     import beammech as bm
 
     beam = {}
-    beam['length'] = 2287
-    beam['supports'] = (6, 780)
+    length = 2287
+    supports = (6, 780)
 
 The length and the locations of the supports will be rounded to the nearest
 integer.  The beam will stretch from x = 0 to x = length.  There must be
@@ -96,7 +96,7 @@ in the form of an iterable of loads.
 
 .. code-block:: python
 
-    beam['loads'] = [L1, L2, L3]
+    loads = [L1, L2, L3]
 
 The only thing missing now to characterize the beam completely are the bending
 stiffness E·I, the shear stiffness G·A and the distance from the neutral line
@@ -117,11 +117,11 @@ variation in beam geometry.
     G = 26000  # shear modulus of aluminium [MPa]
     B, H = 30, 3
     I, A = B*H**3/12, B*H
-    n = beam['length']+1
-    beam['EI'] = np.ones(n)*E*I
-    beam['GA'] = np.ones(n)*G*A
-    beam['top'] = np.ones(n)*H/2
-    beam['bot'] = np.ones(n)*-H/2
+    n = length+1
+    EI = np.ones(n)*E*I
+    GA = np.ones(n)*G*A
+    top = np.ones(n)*H/2
+    bot = np.ones(n)*-H/2
 
 Observe that the length of the numpy arrays needs to be one more than the
 length of the beam, because it must contain values from 0 up to *and
@@ -132,12 +132,11 @@ solve it.
 
 .. code-block:: python
 
-    bm.solve(beam)
+    results = bm.solve(length, supports, EI, GA, top, bottom, True)
 
 This will raise a KeyError if values are missing from the problem definition,
 or a ValueError if incorrect values are used.  On successful completion, the
-results will have been added to the problem dictionary.  The following keys
-are added;
+results are returned in a dictionary.  The following keys exist;
 
 'D'
     A numpy array containing the shear force in the cross-section at each mm

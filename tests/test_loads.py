@@ -3,7 +3,7 @@
 #
 # Author: R.F. Smith <rsmith@xs4all.nl>
 # Created: 2015-08-24 01:34:26 +0200
-# Last modified: 2017-08-09 01:33:19 +0200
+# Last modified: 2018-11-05T21:46:25+0100
 
 """
 Tests for Load classes and load cases.
@@ -58,12 +58,11 @@ def test_load_badargs():  # {{{1
 
 def test_clamped_pointload():  # {{{1
     """Clamped beam with point load at end"""
-    problem = {'length': L, 'EI': np.ones(L+1)*E*Ix, 'GA': np.ones(L+1)*G*A,
-               'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'shear': False, 'supports': None,
-               'loads': bm.Load(force=P, pos=L)}
-    bm.solve(problem)
-    deflection_bm = problem['y'][L]
+    results = bm.solve(
+        L, None, bm.Load(force=P, pos=L), np.ones(L+1)*E*Ix, np.ones(L+1)*G*A,
+        np.ones(L+1)*H/2, -np.ones(L+1)*H/2, False
+    )
+    deflection_bm = results['y'][L]
     deflection_formula = P*L**3/(3*E*Ix)
     reldiff = abs((deflection_bm-deflection_formula)/deflection_formula)
     assert reldiff < 0.005
@@ -71,12 +70,11 @@ def test_clamped_pointload():  # {{{1
 
 def test_clamped_distributed():  # {{{1
     """Clamped beam with distributed load"""
-    problem = {'length': L, 'EI': np.ones(L+1)*E*Ix, 'GA': np.ones(L+1)*G*A,
-               'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'shear': False, 'supports': None,
-               'loads': bm.DistLoad(force=P, start=0, end=L)}
-    bm.solve(problem)
-    deflection_bm = problem['y'][L]
+    results = bm.solve(
+        L, None, bm.DistLoad(force=P, start=0, end=L), np.ones(L+1)*E*Ix,
+        np.ones(L+1)*G*A, np.ones(L+1)*H/2, -np.ones(L+1)*H/2, False
+    )
+    deflection_bm = results['y'][L]
     deflection_formula = P*L**3/(8*E*Ix)
     reldiff = abs((deflection_bm-deflection_formula)/deflection_formula)
     assert reldiff < 0.005
@@ -84,12 +82,11 @@ def test_clamped_distributed():  # {{{1
 
 def test_supported_central_pointload():  # {{{1
     """Ends supported beam with central point load"""
-    problem = {'length': L, 'EI': np.ones(L+1)*E*Ix, 'GA': np.ones(L+1)*G*A,
-               'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'supports': (0, L), 'shear': False,
-               'loads': bm.Load(force=P, pos=L/2)}
-    bm.solve(problem)
-    deflection_bm = problem['y'][int(L/2)]
+    results = bm.solve(
+        L, (0, L), bm.Load(force=P, pos=L/2), np.ones(L+1)*E*Ix, np.ones(L+1)*G*A,
+        np.ones(L+1)*H/2, -np.ones(L+1)*H/2, False
+    )
+    deflection_bm = results['y'][int(L/2)]
     deflection_formula = P*L**3/(48*E*Ix)
     reldiff = abs((deflection_bm-deflection_formula)/deflection_formula)
     assert reldiff < 0.005
@@ -97,12 +94,11 @@ def test_supported_central_pointload():  # {{{1
 
 def test_supported_distributed():  # {{{1
     """Ends supported beam with distributed load"""
-    problem = {'length': L, 'EI': np.ones(L+1)*E*Ix, 'GA': np.ones(L+1)*G*A,
-               'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'supports': (0, L), 'shear': False,
-               'loads': bm.DistLoad(force=P, start=0, end=L)}
-    bm.solve(problem)
-    deflection_bm = problem['y'][int(L/2)]
+    results = bm.solve(
+        L, (0, L), bm.DistLoad(force=P, start=0, end=L), np.ones(L+1)*E*Ix,
+        np.ones(L+1)*G*A, np.ones(L+1)*H/2, -np.ones(L+1)*H/2, False
+    )
+    deflection_bm = results['y'][int(L/2)]
     deflection_formula = 5*P*L**3/(384*E*Ix)
     reldiff = abs((deflection_bm-deflection_formula)/deflection_formula)
     assert reldiff < 0.005
@@ -110,12 +106,11 @@ def test_supported_distributed():  # {{{1
 
 def test_supported_triangl():  # {{{1
     """Ends supported beam with triangle load"""
-    problem = {'length': L, 'EI': np.ones(L+1)*E*Ix, 'GA': np.ones(L+1)*G*A,
-               'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'supports': (0, L), 'shear': False,
-               'loads': bm.TriangleLoad(force=P, start=0, end=L)}
-    bm.solve(problem)
-    deflection_bm = problem['y'][int(0.519*L)]
+    results = bm.solve(
+        L, (0, L), bm.TriangleLoad(force=P, start=0, end=L), np.ones(L+1)*E*Ix,
+        np.ones(L+1)*G*A, np.ones(L+1)*H/2, -np.ones(L+1)*H/2, False
+    )
+    deflection_bm = results['y'][int(0.519*L)]
     deflection_formula = 0.01304*P*L**3/(E*Ix)
     reldiff = abs((deflection_bm-deflection_formula)/deflection_formula)
     assert reldiff < 0.005
@@ -123,14 +118,12 @@ def test_supported_triangl():  # {{{1
 
 def test_supported_pointloads():  # {{{1
     """Ends supported beam with three equidistant point loads"""
-    problem = {'length': L, 'EI': np.ones(L+1)*E*Ix, 'GA': np.ones(L+1)*G*A,
-               'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'supports': (0, L), 'shear': False,
-               'loads': [bm.Load(force=P, pos=L/4),
-                         bm.Load(force=P, pos=L/2),
-                         bm.Load(force=P, pos=3*L/4)]}
-    bm.solve(problem)
-    deflection_bm = problem['y'][int(L/2)]
+    results = bm.solve(
+        L, (0, L), [bm.Load(force=P, pos=L/4), bm.Load(force=P, pos=L/2),
+                    bm.Load(force=P, pos=3*L/4)],
+        np.ones(L+1)*E*Ix, np.ones(L+1)*G*A, np.ones(L+1)*H/2, -np.ones(L+1)*H/2, False
+    )
+    deflection_bm = results['y'][int(L/2)]
     deflection_formula = 19*P*L**3/(384*E*Ix)
     reldiff = abs((deflection_bm-deflection_formula)/deflection_formula)
     assert reldiff < 0.005
@@ -140,12 +133,11 @@ def test_supported_moment_end():
     """Ends supported beam with moment load at end."""
     M = 500*1000
     x = L - 422
-    problem = {'length': L, 'EI': np.ones(L+1)*E*Ix, 'GA': np.ones(L+1)*G*A,
-               'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'supports': (0, L), 'shear': False,
-               'loads': bm.MomentLoad(-M, L)}
-    bm.solve(problem)
-    deflection_bm = problem['y'][x]
+    results = bm.solve(
+        L, (0, L), bm.MomentLoad(-M, L), np.ones(L+1)*E*Ix,
+        np.ones(L+1)*G*A, np.ones(L+1)*H/2, -np.ones(L+1)*H/2, False
+    )
+    deflection_bm = results['y'][x]
     deflection_formula = 0.0642*M*L**2/(E*Ix)
     reldiff = abs((deflection_bm-deflection_formula)/deflection_formula)
     assert reldiff < 0.005
@@ -154,12 +146,11 @@ def test_supported_moment_end():
 def test_supported_moment_both():
     """Ends supported beam with moment load at both ends."""
     M = 500*1000/2
-    problem = {'length': L, 'EI': np.ones(L+1)*E*Ix, 'GA': np.ones(L+1)*G*A,
-               'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'supports': (0, L), 'shear': False,
-               'loads': [bm.MomentLoad(M, 0), bm.MomentLoad(-M, L)]}
-    bm.solve(problem)
-    deflection_bm = problem['y'][int(L/2)]
+    results = bm.solve(
+        L, (0, L), [bm.MomentLoad(M, 0), bm.MomentLoad(-M, L)], np.ones(L+1)*E*Ix,
+        np.ones(L+1)*G*A, np.ones(L+1)*H/2, -np.ones(L+1)*H/2, False
+    )
+    deflection_bm = results['y'][int(L/2)]
     deflection_formula = 6*M*L**2/(48*E*Ix)
     reldiff = abs((deflection_bm-deflection_formula)/deflection_formula)
     assert reldiff < 0.005
@@ -169,12 +160,11 @@ def test_supported_moment_begin():
     """Ends supported beam with moment load at begin."""
     M = 500*1000
     x = 422
-    problem = {'length': L, 'EI': np.ones(L+1)*E*Ix, 'GA': np.ones(L+1)*G*A,
-               'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'supports': (0, L), 'shear': False,
-               'loads': bm.MomentLoad(M, 0)}
-    bm.solve(problem)
-    deflection_bm = problem['y'][x]
+    results = bm.solve(
+        L, (0, L), bm.MomentLoad(M, 0), np.ones(L+1)*E*Ix,
+        np.ones(L+1)*G*A, np.ones(L+1)*H/2, -np.ones(L+1)*H/2, False
+    )
+    deflection_bm = results['y'][x]
     deflection_formula = 0.0642*M*L**2/(E*Ix)
     reldiff = abs((deflection_bm-deflection_formula)/deflection_formula)
     assert reldiff < 0.005
@@ -183,12 +173,11 @@ def test_supported_moment_begin():
 def test_clamped_moment_end():
     """Begin clamped, moment load at end."""
     M = 500*1000
-    problem = {'length': L, 'EI': np.ones(L+1)*E*Ix, 'GA': np.ones(L+1)*G*A,
-               'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'shear': False, 'supports': None,
-               'loads': bm.MomentLoad(M, pos=L)}
-    bm.solve(problem)
-    deflection_bm = problem['y'][L]
+    results = bm.solve(
+        L, None, bm.MomentLoad(M, pos=L), np.ones(L+1)*E*Ix,
+        np.ones(L+1)*G*A, np.ones(L+1)*H/2, -np.ones(L+1)*H/2, False
+    )
+    deflection_bm = results['y'][L]
     deflection_formula = M*L**2/(2*E*Ix)
     reldiff = abs((deflection_bm-deflection_formula)/deflection_formula)
     assert reldiff < 0.005
@@ -206,16 +195,17 @@ def test_gvepet1():  # {{{1
     H = h + 2*t
     Ix = B*(H**3-h**3)/12
     A = B*h
-    problem = {'length': L, 'EI': np.ones(L+1)*E*Ix, 'GA': np.ones(L+1)*G*A,
-               'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'supports': (0, L), 'shear': False,
-               'loads': bm.Load(force=P, pos=L/2)}
-    bm.solve(problem)
-    bending_bm = problem['y'][int(L/2)]
+    results = bm.solve(
+        L, (0, L), bm.Load(force=P, pos=L/2), np.ones(L+1)*E*Ix, np.ones(L+1)*G*A,
+        np.ones(L+1)*H/2, -np.ones(L+1)*H/2, False
+    )
+    bending_bm = results['y'][int(L/2)]
     bending_formula = P*L**3/(48*E*Ix)
-    problem["shear"] = True
-    bm.solve(problem)
-    total_bm = problem['y'][int(L/2)]
+    results = bm.solve(
+        L, (0, L), bm.Load(force=P, pos=L/2), np.ones(L+1)*E*Ix, np.ones(L+1)*G*A,
+        np.ones(L+1)*H/2, -np.ones(L+1)*H/2, True
+    )
+    total_bm = results['y'][int(L/2)]
     total_formula = bending_formula + (1.5*P/2*L/2)/(G*A)
     reldiff = abs((bending_bm-bending_formula)/bending_formula)
     assert reldiff < 0.005
@@ -235,16 +225,17 @@ def test_cvepet3():  # {{{1
     H = h + 2*t
     Ix = B*(H**3-h**3)/12
     A = B*h
-    problem = {'length': L, 'EI': np.ones(L+1)*E*Ix, 'GA': np.ones(L+1)*G*A,
-               'top': np.ones(L+1)*H/2, 'bot': -np.ones(L+1)*H/2,
-               'supports': (0, L), 'shear': False,
-               'loads': bm.Load(force=P, pos=L/2)}
-    bm.solve(problem)
-    bending_bm = problem['y'][int(L/2)]
+    results = bm.solve(
+        L, (0, L), bm.Load(force=P, pos=L/2), np.ones(L+1)*E*Ix, np.ones(L+1)*G*A,
+        np.ones(L+1)*H/2, -np.ones(L+1)*H/2, False
+    )
+    bending_bm = results['y'][int(L/2)]
     bending_formula = P*L**3/(48*E*Ix)
-    problem["shear"] = True
-    bm.solve(problem)
-    total_bm = problem['y'][int(L/2)]
+    results = bm.solve(
+        L, (0, L), bm.Load(force=P, pos=L/2), np.ones(L+1)*E*Ix, np.ones(L+1)*G*A,
+        np.ones(L+1)*H/2, -np.ones(L+1)*H/2, True
+    )
+    total_bm = results['y'][int(L/2)]
     total_formula = bending_formula + (1.5*P/2*L/2)/(G*A)
     reldiff = abs((bending_bm-bending_formula)/bending_formula)
     assert reldiff < 0.005

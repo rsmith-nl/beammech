@@ -1,7 +1,7 @@
 # file: beammech.py
 # vim:fileencoding=utf-8:ft=python:fdm=marker
-# Copyright © 2012-2015 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2018-07-08T10:33:28+0200
+# Copyright © 2012-2018 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
+# Last modified: 2018-11-05T22:35:11+0100
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -29,37 +29,31 @@ from os.path import basename
 import math
 import numpy as np
 
-__version__ = '0.12'
+__version__ = '1.0'
 
 
-def solve(problem):  # {{{
+def solve(length, supports, loads, EI, GA, top, bottom, shear):  # {{{
     """Solve the beam problem.
 
     Arguments:
-        problem: A dictionary containing the parameters of the problem.
-            For this function, the dictionary should have the following keys;
-            * 'length': The length of the beam in mm. This will be rounded to
-                an integer value.
-            * 'supports': Either None or a 2-tuple of numbers between 0 and
-                length. If None, the beam will be assumed to be clamped at the
-                origin.
-            * 'loads': Either a Load or an iterable of Loads.
-            * 'EI': An iterable of size length+1 containing the bending
-                stiffenss in every mm of the cross-section of the beam.
-            * 'GA': An iterable of size length+1 containing the shear
-                stiffenss in every mm of the cross-section of the beam.
-            * 'top': An iterable of size length+1 containing the height
-                above the neutral line in every mm of the cross-section of the
-                beam.
-            * 'bottom': An iterable of size length+1 containing the height
-                under the neutral line in every mm of the cross-section of the
-                beam.
-            * 'shear': A boolean indication if shear deformations should be
-                included. Will be added and set to 'True' if not provided.
+        length: The length of the beam in mm. This will be rounded to
+            an integer value.
+        supports: Either None or a 2-tuple of numbers between 0 and length.
+            If None, the beam will be assumed to be clamped at the origin.
+        loads: Either a Load or an iterable of Loads.
+        EI: An iterable of size length+1 containing the bending
+            stiffenss in every mm of the cross-section of the beam.
+        GA: An iterable of size length+1 containing the shear
+            stiffenss in every mm of the cross-section of the beam.
+        top: An iterable of size length+1 containing the height
+            above the neutral line in every mm of the cross-section of the beam.
+        bottom: An iterable of size length+1 containing the height
+            under the neutral line in every mm of the cross-section of the beam.
+        shear: A boolean indication if shear deformations should be
+             included. Will be added and set to 'True' if not provided.
 
     Returns:
-        This function returns the modified 'problem' dictionary.
-        The following items will have been added:
+        This function returns a data dictionary with following items:
         * 'D': A numpy array containing the shear force in the cross-section
             at each mm of the beam.
         * 'M': A numpy array containing the bending moment in the cross-section
@@ -68,6 +62,8 @@ def solve(problem):  # {{{
             of the beam.
         * 'y': A numpy array containing the vertical displacement at each mm
             of the beam.
+        * 'a': A numpy array containing angle between the tangent line of the beam
+            and the x-axis in radians at each mm of the beam.
         * 'etop': A numpy array containing the strain at the top of the
             cross-section at each mm of the beam.
         * 'ebot': A numpy array containing the strain at the bottom of the
@@ -76,11 +72,12 @@ def solve(problem):  # {{{
             forces at said supports. Else R[0] is the reaction force at the
             clamped x=0 and R[1] is the reaction moment at that point.
     """
-    length, (s1, s2) = _check_length_supports(problem)
-    loads = _check_loads(problem)
+    length, s1, s2 = _check_length_supports(length, supports)
+    loads = _check_loads(loads)
     loads = [ld for ld in loads]  # make a copy since we modifiy it!
-    EI, GA, top, bot = _check_arrays(problem)
-    shear = _check_shear(problem)
+    EI, GA, top, bot = _check_arrays(length, EI, GA, top, bottom)
+    if shear not in (True, False):
+        raise ValueError('shear should be a boolean')
     # Calculate support loads.
     moment = sum([ld.moment(s1) for ld in loads])
     if s2:
@@ -96,7 +93,8 @@ def solve(problem):  # {{{
     # Calculate bending moment
     M = np.cumsum(D)
     Mstep = np.sum(
-        np.array([ld.moment_array(length) for ld in loads if isinstance(ld, MomentLoad)]), axis=0
+        np.array([ld.moment_array(length) for ld in loads if
+                  isinstance(ld, MomentLoad)]), axis=0
     )
     M += Mstep
     if s2 is None:
@@ -117,16 +115,17 @@ def solve(problem):  # {{{
         slope = np.concatenate((np.arange(-s1, 1, 1), np.arange(1, len(y) - s1))) * delta
         dy += delta
         y = y + slope
-    problem['D'], problem['M'] = D, M
-    problem['dy'], problem['y'], problem['R'] = dy, y, (R1, R2)
-    problem['a'] = np.arctan(dy)
-    problem['etop'], problem['ebot'] = etop, ebot
-    return problem  # }}}
+    results = {}
+    results['D'], results['M'] = D, M
+    results['dy'], results['y'], results['R'] = dy, y, (R1, R2)
+    results['a'] = np.arctan(dy)
+    results['etop'], results['ebot'] = etop, ebot
+    return results  # }}}
 
 
-def save(problem, path):  # {{{
+def save(results, path):  # {{{
     """
-    Save the data from a solved problem to a file as columns of numbers.
+    Save the data from a solved results to a file as columns of numbers.
     It writes the following columns to the file:
     * position
     * shear force
@@ -137,18 +136,18 @@ def save(problem, path):  # {{{
     * deflection angle
 
     Arguments:
-        problem: Solved problem dictionary.
+        results: Results dictionary.
         path: Location where the data should be solved
 
     Raises:
-        ValueError if the problem has not been solved yet.
+        ValueError if the results has not been solved yet.
     """
-    if 'y' not in problem:
-        raise ValueError('problem has not solved')
+    if 'y' not in results:
+        raise ValueError('results has not solved')
     data = np.vstack(
         (
-            np.arange(problem['length'] + 1), problem['D'], problem['M'], problem['y'],
-            problem['etop'], problem['ebot'], problem['dy']
+            np.arange(results['length'] + 1), results['D'], results['M'], results['y'],
+            results['etop'], results['ebot'], results['dy']
         )
     ).T
     p = basename(path)
@@ -504,46 +503,41 @@ def _start_end(**kwargs):  # {{{
     return pos  # }}}
 
 
-def _check_length_supports(problem):  # {{{
+def _check_length_supports(length, supports):  # {{{
     """
-    Validate that the problem contains proper length and supports. See
-    solve().
+    Validate the length and supports. See solve().
 
     Returns:
-        A nested tuple (length, (support1, support2))
+        A tuple (length, support1, support2)
     """
-    problem['length'] = round(problem['length'])
-    if problem['length'] < 1:
+    length = int(round(length))
+    if length < 1:
         raise ValueError('length must be ≥1')
-    s = problem['supports']
-    if s is not None:
-        if len(s) != 2:
+    if supports is not None:
+        if len(supports) != 2:
             t = 'The problem definition must contain exactly two supports.'
             raise ValueError(t)
-        s = (round(s[0]), round(s[1]))
+        s = (int(round(supports[0])), int(round(supports[1])))
         if s[0] == s[1]:
             raise ValueError('Two identical supports found!')
         elif s[0] > s[1]:
             s = (s[1], s[0])
-        if s[0] < 0 or s[1] > problem['length']:
+        if s[0] < 0 or s[1] > length:
             raise ValueError('Support(s) outside of the beam!')
     else:
         s = (0, None)
-    problem['supports'] = s
-    return (problem['length'], s)  # }}}
+    return (length, s[0], s[1])  # }}}
 
 
-def _check_loads(problem):  # {{{
+def _check_loads(loads):  # {{{
     """
     Validate the loads in the problem. See solve().
 
     Returns:
         A list of Loads
     """
-    loads = problem['loads']
     if isinstance(loads, Load):
         loads = [loads]
-        problem['loads'] = loads
     if loads is None or len(loads) == 0:
         raise ValueError('No loads specified')
     for ld in loads:
@@ -552,34 +546,20 @@ def _check_loads(problem):  # {{{
     return list(loads)  # }}}
 
 
-def _check_arrays(problem):  # {{{
+def _check_arrays(L, EI, GA, top, bottom):  # {{{
     """
     Validate the length of the EI, GA, top and bot iterables and converts
-    them into numpy arrays. This will modify the problem dictionary.
-    See solve().
+    them into numpy arrays. See solve().
 
     Returns:
         The modified EI, GA, top and bottom arrays.
     """
-    L = problem['length']
-    for key in ['EI', 'GA', 'top', 'bot']:
-        if not isinstance(problem[key], np.ndarray):
-            problem[key] = np.array(problem[key])
-        la = len(problem[key])
+    for name, ar in zip(('EI', 'GA', 'top', 'bottom'), (EI, GA, top, bottom)):
+        if not isinstance(ar, np.ndarray):
+            ar = np.array(ar)
+        la = len(ar)
         if la != L + 1:
-            raise ValueError(f"Length of array {key} ({la}) doesn't match beam length ({L}) + 1 .")
-    return problem['EI'], problem['GA'], problem['top'], problem['bot']  # }}}
-
-
-def _check_shear(problem):  # {{{
-    """
-    Check if the problem should incluse shear. See solve().
-
-    Returns:
-        The value of problem['shear'].
-    """
-    if 'shear' not in problem:
-        problem['shear'] = True
-    elif not isinstance(problem['shear'], bool):
-        raise ValueError("'shear' should be a boolean.")
-    return problem['shear']  # }}}
+            raise ValueError(
+                f"Length of array {name} ({la}) doesn't match beam length ({L}) + 1 ."
+            )
+    return EI, GA, top, bottom  # }}}
