@@ -1,8 +1,9 @@
-.PHONY: all install tests dist clean backup deinstall check tags format
+.PHONY: all install uninstall clean check tags format test
 .SUFFIXES: .ps .pdf .py
 
 MOD= beammech
 SRCS:= ${MOD}.py
+PKGPATH!=python3 -c "import site; print(site.getsitepackages()[0])"
 
 all::
 	@echo 'you can use the following commands:'
@@ -16,9 +17,7 @@ all::
 	@echo '* format: format the source with yapf.'
 	@echo '* format: format the source with yapf.'
 
-PYSITE!=python3 -B -c 'import site; print(site.getsitepackages()[0])'
-
-install: setup.py ${MOD}.py
+install::
 	@if [ `id -u` != 0 ]; then \
 		echo "You must be root to install the module!"; \
 		exit 1; \
@@ -32,7 +31,7 @@ uninstall::
 		echo "You must be root to uninstall the program!"; \
 		exit 1; \
 	fi
-	rm -f ${PYSITE}/${MOD}.py
+	rm -f ${PKGPATH}/${MOD}.py ${PKGPATH}/${MOD}.egg*
 
 # Create distribution file. Use zip format to make deployment easier on windoze.
 dist:
@@ -46,7 +45,7 @@ clean::
 
 # The targets below are mostly for the maintainer.
 check:: .IGNORE
-	pylama -i E501,W605 ${MOD}.py tests/*.py
+	env PYTHONWARNINGS=ignore::FutureWarning pylama -i E501,W605 ${MOD}.py tests/*.py
 
 tags::
 	exctags -R --verbose
