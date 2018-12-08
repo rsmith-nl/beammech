@@ -1,19 +1,20 @@
 .PHONY: all install tests dist clean backup deinstall check tags format
 .SUFFIXES: .ps .pdf .py
 
-MOD = beammech
-SRCS = ${MOD}.py
+MOD= beammech
+SRCS:= ${MOD}.py
 
 all::
 	@echo 'you can use the following commands:'
-	@echo '* tests'
+	@echo '* test: run the built-in tests.'
 	@echo '* install'
-	@echo '* deinstall'
-	@echo '* dist'
-	@echo '* clean'
-	@echo '* check'
-	@echo '* tags'
-	@echo '* format'
+	@echo '* uninstall'
+	@echo '* dist: create a distribution file.'
+	@echo '* clean: remove all generated files.'
+	@echo '* check: run pylama on all python files.'
+	@echo '* tags: run exctags.'
+	@echo '* format: format the source with yapf.'
+	@echo '* format: format the source with yapf.'
 
 PYSITE!=python3 -B -c 'import site; print(site.getsitepackages()[0])'
 
@@ -26,9 +27,9 @@ install: setup.py ${MOD}.py
 	python3 -B setup.py install
 	rm -rf build
 
-deinstall::
+uninstall::
 	@if [ `id -u` != 0 ]; then \
-		echo "You must be root to deinstall the program!"; \
+		echo "You must be root to uninstall the program!"; \
 		exit 1; \
 	fi
 	rm -f ${PYSITE}/${MOD}.py
@@ -39,16 +40,19 @@ dist:
 	rm -f MANIFEST
 
 clean::
-	rm -rf dist build backup-*.tar.gz MANIFEST __pycache__
+	rm -rf dist build backup-*.tar* MANIFEST
+	find . -type f -name '*.pyc' -delete
+	find . -type d -name __pycache__ -delete
 
-check::
-	pylama -i E501 ${MOD}.py tests/*.py
+# The targets below are mostly for the maintainer.
+check:: .IGNORE
+	pylama -i E501,W605 ${MOD}.py tests/*.py
 
 tags::
-	exctags -R
+	exctags -R --verbose
 
 format::
 	yapf-3.7 -i ${MOD}.py tests/*.py
 
-tests::
+test::
 	pytest-3.7 -v tests
