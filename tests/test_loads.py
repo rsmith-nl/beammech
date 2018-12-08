@@ -3,7 +3,7 @@
 #
 # Author: R.F. Smith <rsmith@xs4all.nl>
 # Created: 2015-08-24 01:34:26 +0200
-# Last modified: 2018-11-05T21:46:25+0100
+# Last modified: 2018-12-08T23:02:38+0100
 """
 Tests for Load classes and load cases.
 """
@@ -62,7 +62,7 @@ def test_clamped_pointload():  # {{{1
         np.ones(L + 1) * G * A,
         np.ones(L + 1) * H / 2, -np.ones(L + 1) * H / 2, False
     )
-    deflection_bm = results['y'][L]
+    deflection_bm = results.y[L]
     deflection_formula = P * L**3 / (3 * E * Ix)
     reldiff = abs((deflection_bm - deflection_formula) / deflection_formula)
     assert reldiff < 0.005
@@ -76,7 +76,7 @@ def test_clamped_distributed():  # {{{1
         np.ones(L + 1) * G * A,
         np.ones(L + 1) * H / 2, -np.ones(L + 1) * H / 2, False
     )
-    deflection_bm = results['y'][L]
+    deflection_bm = results.y[L]
     deflection_formula = P * L**3 / (8 * E * Ix)
     reldiff = abs((deflection_bm - deflection_formula) / deflection_formula)
     assert reldiff < 0.005
@@ -90,7 +90,7 @@ def test_supported_central_pointload():  # {{{1
         np.ones(L + 1) * G * A,
         np.ones(L + 1) * H / 2, -np.ones(L + 1) * H / 2, False
     )
-    deflection_bm = results['y'][int(L / 2)]
+    deflection_bm = results.y[int(L / 2)]
     deflection_formula = P * L**3 / (48 * E * Ix)
     reldiff = abs((deflection_bm - deflection_formula) / deflection_formula)
     assert reldiff < 0.005
@@ -104,7 +104,7 @@ def test_supported_distributed():  # {{{1
         np.ones(L + 1) * G * A,
         np.ones(L + 1) * H / 2, -np.ones(L + 1) * H / 2, False
     )
-    deflection_bm = results['y'][int(L / 2)]
+    deflection_bm = results.y[int(L / 2)]
     deflection_formula = 5 * P * L**3 / (384 * E * Ix)
     reldiff = abs((deflection_bm - deflection_formula) / deflection_formula)
     assert reldiff < 0.005
@@ -118,7 +118,7 @@ def test_supported_triangl():  # {{{1
         np.ones(L + 1) * G * A,
         np.ones(L + 1) * H / 2, -np.ones(L + 1) * H / 2, False
     )
-    deflection_bm = results['y'][int(0.519 * L)]
+    deflection_bm = results.y[int(0.519 * L)]
     deflection_formula = 0.01304 * P * L**3 / (E * Ix)
     reldiff = abs((deflection_bm - deflection_formula) / deflection_formula)
     assert reldiff < 0.005
@@ -136,7 +136,7 @@ def test_supported_pointloads():  # {{{1
         np.ones(L + 1) * G * A,
         np.ones(L + 1) * H / 2, -np.ones(L + 1) * H / 2, False
     )
-    deflection_bm = results['y'][int(L / 2)]
+    deflection_bm = results.y[int(L / 2)]
     deflection_formula = 19 * P * L**3 / (384 * E * Ix)
     reldiff = abs((deflection_bm - deflection_formula) / deflection_formula)
     assert reldiff < 0.005
@@ -152,7 +152,7 @@ def test_supported_moment_end():
         np.ones(L + 1) * G * A,
         np.ones(L + 1) * H / 2, -np.ones(L + 1) * H / 2, False
     )
-    deflection_bm = results['y'][x]
+    deflection_bm = results.y[x]
     deflection_formula = 0.0642 * M * L**2 / (E * Ix)
     reldiff = abs((deflection_bm - deflection_formula) / deflection_formula)
     assert reldiff < 0.005
@@ -167,7 +167,7 @@ def test_supported_moment_both():
         np.ones(L + 1) * G * A,
         np.ones(L + 1) * H / 2, -np.ones(L + 1) * H / 2, False
     )
-    deflection_bm = results['y'][int(L / 2)]
+    deflection_bm = results.y[int(L / 2)]
     deflection_formula = 6 * M * L**2 / (48 * E * Ix)
     reldiff = abs((deflection_bm - deflection_formula) / deflection_formula)
     assert reldiff < 0.005
@@ -183,7 +183,7 @@ def test_supported_moment_begin():
         np.ones(L + 1) * G * A,
         np.ones(L + 1) * H / 2, -np.ones(L + 1) * H / 2, False
     )
-    deflection_bm = results['y'][x]
+    deflection_bm = results.y[x]
     deflection_formula = 0.0642 * M * L**2 / (E * Ix)
     reldiff = abs((deflection_bm - deflection_formula) / deflection_formula)
     assert reldiff < 0.005
@@ -198,7 +198,7 @@ def test_clamped_moment_end():
         np.ones(L + 1) * G * A,
         np.ones(L + 1) * H / 2, -np.ones(L + 1) * H / 2, False
     )
-    deflection_bm = results['y'][L]
+    deflection_bm = results.y[L]
     deflection_formula = M * L**2 / (2 * E * Ix)
     reldiff = abs((deflection_bm - deflection_formula) / deflection_formula)
     assert reldiff < 0.005
@@ -222,7 +222,7 @@ def test_gvepet1():  # {{{1
         np.ones(L + 1) * G * A,
         np.ones(L + 1) * H / 2, -np.ones(L + 1) * H / 2, False
     )
-    bending_bm = results['y'][int(L / 2)]
+    bending_bm = results.y[int(L / 2)]
     bending_formula = P * L**3 / (48 * E * Ix)
     results = bm.solve(
         L, (0, L), bm.Load(force=P, pos=L / 2),
@@ -230,7 +230,7 @@ def test_gvepet1():  # {{{1
         np.ones(L + 1) * G * A,
         np.ones(L + 1) * H / 2, -np.ones(L + 1) * H / 2, True
     )
-    total_bm = results['y'][int(L / 2)]
+    total_bm = results.y[int(L / 2)]
     total_formula = bending_formula + (1.5 * P / 2 * L / 2) / (G * A)
     reldiff = abs((bending_bm - bending_formula) / bending_formula)
     assert reldiff < 0.005
@@ -256,7 +256,7 @@ def test_cvepet3():  # {{{1
         np.ones(L + 1) * G * A,
         np.ones(L + 1) * H / 2, -np.ones(L + 1) * H / 2, False
     )
-    bending_bm = results['y'][int(L / 2)]
+    bending_bm = results.y[int(L / 2)]
     bending_formula = P * L**3 / (48 * E * Ix)
     results = bm.solve(
         L, (0, L), bm.Load(force=P, pos=L / 2),
@@ -264,7 +264,7 @@ def test_cvepet3():  # {{{1
         np.ones(L + 1) * G * A,
         np.ones(L + 1) * H / 2, -np.ones(L + 1) * H / 2, True
     )
-    total_bm = results['y'][int(L / 2)]
+    total_bm = results.y[int(L / 2)]
     total_formula = bending_formula + (1.5 * P / 2 * L / 2) / (G * A)
     reldiff = abs((bending_bm - bending_formula) / bending_formula)
     assert reldiff < 0.005

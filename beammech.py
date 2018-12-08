@@ -1,7 +1,7 @@
 # file: beammech.py
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2018 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2018-11-05T22:35:11+0100
+# Last modified: 2018-12-08T22:57:18+0100
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -26,6 +26,7 @@
 
 from datetime import datetime
 from os.path import basename
+from types import SimpleNamespace
 import math
 import numpy as np
 
@@ -53,22 +54,22 @@ def solve(length, supports, loads, EI, GA, top, bottom, shear):  # {{{
              included. Will be added and set to 'True' if not provided.
 
     Returns:
-        This function returns a data dictionary with following items:
-        * 'D': A numpy array containing the shear force in the cross-section
+        This function returns a types.SimpleNamespace with following items:
+        * D: A numpy array containing the shear force in the cross-section
             at each mm of the beam.
-        * 'M': A numpy array containing the bending moment in the cross-section
+        * M: A numpy array containing the bending moment in the cross-section
             at each mm of the beam.
-        * 'dy': A numpy array containing the deflection angle at each mm
+        * dy: A numpy array containing the deflection angle at each mm
             of the beam.
-        * 'y': A numpy array containing the vertical displacement at each mm
+        * y: A numpy array containing the vertical displacement at each mm
             of the beam.
-        * 'a': A numpy array containing angle between the tangent line of the beam
+        * a: A numpy array containing angle between the tangent line of the beam
             and the x-axis in radians at each mm of the beam.
-        * 'etop': A numpy array containing the strain at the top of the
+        * etop: A numpy array containing the strain at the top of the
             cross-section at each mm of the beam.
-        * 'ebot': A numpy array containing the strain at the bottom of the
+        * ebot: A numpy array containing the strain at the bottom of the
             cross-section at each mm of the beam.
-        * 'R': If 'supports' was provided, R is a 2-tuple of the reaction
+        * R: If 'supports' was provided, R is a 2-tuple of the reaction
             forces at said supports. Else R[0] is the reaction force at the
             clamped x=0 and R[1] is the reaction moment at that point.
     """
@@ -114,11 +115,11 @@ def solve(length, supports, loads, EI, GA, top, bottom, shear):  # {{{
         slope = np.concatenate((np.arange(-s1, 1, 1), np.arange(1, len(y) - s1))) * delta
         dy += delta
         y = y + slope
-    results = {}
-    results['D'], results['M'] = D, M
-    results['dy'], results['y'], results['R'] = dy, y, (R1, R2)
-    results['a'] = np.arctan(dy)
-    results['etop'], results['ebot'] = etop, ebot
+    results = SimpleNamespace()
+    results.D, results.M = D, M
+    results.dy, results.y, results.R = dy, y, (R1, R2)
+    results.a = np.arctan(dy)
+    results.etop, results.ebot = etop, ebot
     return results  # }}}
 
 
@@ -139,14 +140,12 @@ def save(results, path):  # {{{
         path: Location where the data should be solved
 
     Raises:
-        ValueError if the results has not been solved yet.
+        AttributeError if the results have not been solved yet.
     """
-    if 'y' not in results:
-        raise ValueError('results has not solved')
     data = np.vstack(
         (
-            np.arange(results['length'] + 1), results['D'], results['M'], results['y'],
-            results['etop'], results['ebot'], results['dy']
+            np.arange(results.length + 1), results.D, results.M, results.y,
+            results.etop, results.ebot, results.dy
         )
     ).T
     p = basename(path)
