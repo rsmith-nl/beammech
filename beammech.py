@@ -1,7 +1,7 @@
 # file: beammech.py
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2018 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2019-03-19T17:02:18+0100
+# Last modified: 2019-03-19T18:31:50+0100
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -42,13 +42,13 @@ def solve(length, supports, loads, EI, GA, top, bottom, shear):  # {{{
         supports: Either None or a 2-tuple of numbers between 0 and length.
             If None, the beam will be assumed to be clamped at the origin.
         loads: Either a Load or an iterable of Loads.
-        EI: An iterable of size length+1 containing the bending
+        EI: An iterable of size length+1 or a float containing the bending
             stiffenss in every mm of the cross-section of the beam.
-        GA: An iterable of size length+1 containing the shear
+        GA: An iterable of size length+1 or a float containing the shear
             stiffenss in every mm of the cross-section of the beam.
-        top: An iterable of size length+1 containing the height
+        top: An iterable of size length+1 or a float containing the height
             above the neutral line in every mm of the cross-section of the beam.
-        bottom: An iterable of size length+1 containing the height
+        bottom: An iterable of size length+1 or a float containing the height
             under the neutral line in every mm of the cross-section of the beam.
         shear: A boolean indication if shear deformations should be
              included. Will be added and set to 'True' if not provided.
@@ -555,7 +555,11 @@ def _check_arrays(L, EI, GA, top, bottom):  # {{{
         The modified EI, GA, top and bottom arrays.
     """
     for name, ar in zip(('EI', 'GA', 'top', 'bottom'), (EI, GA, top, bottom)):
-        if not isinstance(ar, np.ndarray):
+        # Convert float to an ndarray.
+        if isinstance(ar, float):
+            ar = np.ones(L+1) * ar
+        # Convert list/tuple to ndarray.
+        elif isinstance(ar, np.ndarray):
             ar = np.array(ar)
         la = len(ar)
         if la != L + 1:
