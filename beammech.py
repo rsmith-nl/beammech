@@ -1,7 +1,7 @@
 # file: beammech.py
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2018 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2018-12-08T22:57:18+0100
+# Last modified: 2019-03-19T17:02:18+0100
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -72,6 +72,7 @@ def solve(length, supports, loads, EI, GA, top, bottom, shear):  # {{{
         * R: If 'supports' was provided, R is a 2-tuple of the reaction
             forces at said supports. Else R[0] is the reaction force at the
             clamped x=0 and R[1] is the reaction moment at that point.
+        * length: Length in mm.
     """
     length, s1, s2 = _check_length_supports(length, supports)
     loads = _check_loads(loads)
@@ -116,6 +117,7 @@ def solve(length, supports, loads, EI, GA, top, bottom, shear):  # {{{
         dy += delta
         y = y + slope
     results = SimpleNamespace()
+    results.length = length
     results.D, results.M = D, M
     results.dy, results.y, results.R = dy, y, (R1, R2)
     results.a = np.arctan(dy)
