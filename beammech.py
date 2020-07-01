@@ -1,27 +1,9 @@
 # file: beammech.py
 # vim:fileencoding=utf-8:ft=python:fdm=marker
-# Copyright © 2012-2018 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
-# Last modified: 2019-03-19T18:31:50+0100
+# Copyright © 2012-2020 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
+# SPDX-License-Identifier: MIT
+# Last modified: 2020-07-01T22:24:48+0200
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-#
-# THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS “AS IS” AND ANY EXPRESS
-# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN
-# NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA,
-# OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-# EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """Module for stiffness and strength calculations of beams."""
 
 from datetime import datetime
@@ -192,28 +174,36 @@ def EI(sections, normal):  # {{{
         >>> sections = ((B, t, 0, E), (B, t, h+t, E))
         >>> EI(sections, E)
         (3794000000.0000005, 10.0, -10.0)
+
+        >>> E1, E2 = 200000, 71000
+        >>> t1, t2 = 1.5, 2.5
+        >>> H = 31
+        >>> B = 100
+        >>> sections = ((B, t1, 0, E1), (B, t2, H-t2, E2))
+        >>> EI(sections, E1)
+        (9393560891.143106, 11.530104712041885, -19.469895287958117)
     """
     normalized = tuple((w * E / normal, h, offs) for w, h, offs, E in sections)
     A = sum(w * h for w, h, _ in normalized)
     S = sum(w * h * (offs + h / 2) for w, h, offs in normalized)
     yn = S / A
     # Find the geometry that straddles yn.
-    to_split = tuple(g for g in normalized if g[2] < yn and g[1] + g[2] > yn)
-    geom = tuple(g for g in normalized if g not in to_split)
+    to_split = tuple(g for g in sections if g[2] < yn and g[1] + g[2] > yn)
+    geom = tuple(g for g in sections if g not in to_split)
     # split the geometry.
     # The new tuple has the format (width, height, top, bottom)
     new_geom = []
-    for w, h, offs in to_split:
+    for w, h, offs, E in to_split:
         h1 = yn - offs
         h2 = h - h1
-        new_geom.append((w, h1, h1, 0))
-        new_geom.append((w, h2, 0, -h2))
+        new_geom.append((w, h1, h1, 0, E))
+        new_geom.append((w, h2, 0, -h2, E))
     # Convert the remaining geometry
-    for w, h, offs in geom:
-        new_geom.append((w, h, yn - offs, yn - offs - h))
-    EI = normal * sum(w * (top**3 - bot**3) / 3 for w, h, top, bot in new_geom)
-    top = max(g[-2] for g in new_geom)
-    bot = min(g[-1] for g in new_geom)
+    for w, h, offs, E in geom:
+        new_geom.append((w, h, yn - offs, yn - offs - h, E))
+    EI = sum(E * w * (top**3 - bot**3) / 3 for w, h, top, bot, E in new_geom)
+    top = max(g[-3] for g in new_geom)
+    bot = min(g[-2] for g in new_geom)
     return EI, top, bot  # }}}
 
 
