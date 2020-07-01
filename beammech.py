@@ -2,7 +2,7 @@
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2020 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
 # SPDX-License-Identifier: MIT
-# Last modified: 2020-07-01T22:24:48+0200
+# Last modified: 2020-07-01T22:41:03+0200
 #
 """Module for stiffness and strength calculations of beams."""
 
@@ -164,7 +164,7 @@ def EI(sections, normal):  # {{{
         >>> H = 20
         >>> sections = ((B, H, 0, E),)
         >>> EI(sections, E)
-        (14000000000.000002, 10.0, -10.0)
+        (14000000000.0, 10.0, -10.0)
 
         >>> B = 100
         >>> h = 18
@@ -173,7 +173,7 @@ def EI(sections, normal):  # {{{
         >>> E = 210000
         >>> sections = ((B, t, 0, E), (B, t, h+t, E))
         >>> EI(sections, E)
-        (3794000000.0000005, 10.0, -10.0)
+        (3794000000.0, 10.0, -10.0)
 
         >>> E1, E2 = 200000, 71000
         >>> t1, t2 = 1.5, 2.5
@@ -222,7 +222,7 @@ def interpolate(tuples):  # {{{
     Examples:
         >>> import numpy as np
         >>> interpolate([(0,0), (3,3)])
-        array([ 0.,  1.,  2.,  3.])
+        array([0., 1., 2., 3.])
         >>> interpolate([(0,0), (4,3), (6,-1)])
         array([ 0.  ,  0.75,  1.5 ,  2.25,  3.  ,  1.  , -1.  ])
         >>> interpolate([(1,1), (4,4), (6,-3)])

@@ -4,7 +4,7 @@
 # Copyright © 2019 R.F. Smith <rsmith@xs4all.nl>.
 # SPDX-License-Identifier: MIT
 # Created: 2012-04-15T20:42:31+02:00
-# Last modified: 2019-05-30T00:22:35+0200
+# Last modified: 2020-07-01T22:42:41+0200
 
 .PHONY: all install uninstall clean check tags format test
 .SUFFIXES: .ps .pdf .py
@@ -70,4 +70,4 @@ format::
 	${FMT} ${MOD}.py tests/*.py
 
 test::
-	${TEST} tests
+	${TEST} --doctest-modules
