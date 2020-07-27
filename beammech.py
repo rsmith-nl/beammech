@@ -2,7 +2,7 @@
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2020 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
 # SPDX-License-Identifier: MIT
-# Last modified: 2020-07-01T22:41:03+0200
+# Last modified: 2020-07-28T01:13:45+0200
 #
 """Module for stiffness and strength calculations of beams."""
 
@@ -138,7 +138,7 @@ def save(results, path):  # {{{
     np.savetxt(path, data, fmt='%g', header=h)  # }}}
 
 
-def EI(sections, normal):  # {{{
+def EI(sections, normal=None):  # {{{
     """Calculate the bending stiffnes of a cross-section.
 
     The cross-section is composed out of rectangular nonoverlapping sections
@@ -152,7 +152,7 @@ def EI(sections, normal):  # {{{
     Arguments:
         sections: Iterable of section properties.
         normal: The Young's modulus to which the total cross-section will be
-            normalized.
+            normalized. (Not used anymore, retained for compatibility.)
 
     Returns:
         Tuple of EI, top and bottom. Top and bottom are with respect to the
@@ -163,7 +163,7 @@ def EI(sections, normal):  # {{{
         >>> B = 100
         >>> H = 20
         >>> sections = ((B, H, 0, E),)
-        >>> EI(sections, E)
+        >>> EI(sections)
         (14000000000.0, 10.0, -10.0)
 
         >>> B = 100
@@ -172,7 +172,7 @@ def EI(sections, normal):  # {{{
         >>> H = h + 2 * t
         >>> E = 210000
         >>> sections = ((B, t, 0, E), (B, t, h+t, E))
-        >>> EI(sections, E)
+        >>> EI(sections)
         (3794000000.0, 10.0, -10.0)
 
         >>> E1, E2 = 200000, 71000
@@ -180,17 +180,18 @@ def EI(sections, normal):  # {{{
         >>> H = 31
         >>> B = 100
         >>> sections = ((B, t1, 0, E1), (B, t2, H-t2, E2))
-        >>> EI(sections, E1)
+        >>> EI(sections)
         (9393560891.143106, 11.530104712041885, -19.469895287958117)
     """
+    normal = sections[0][-1]
     normalized = tuple((w * E / normal, h, offs) for w, h, offs, E in sections)
     A = sum(w * h for w, h, _ in normalized)
     S = sum(w * h * (offs + h / 2) for w, h, offs in normalized)
     yn = S / A
-    # Find the geometry that straddles yn.
+    # Find any geometry that straddles yn.
     to_split = tuple(g for g in sections if g[2] < yn and g[1] + g[2] > yn)
     geom = tuple(g for g in sections if g not in to_split)
-    # split the geometry.
+    # split that geometry.
     # The new tuple has the format (width, height, top, bottom)
     new_geom = []
     for w, h, offs, E in to_split:
@@ -198,7 +199,7 @@ def EI(sections, normal):  # {{{
         h2 = h - h1
         new_geom.append((w, h1, h1, 0, E))
         new_geom.append((w, h2, 0, -h2, E))
-    # Convert the remaining geometry
+    # Convert the remaining geometry to reference yn.
     for w, h, offs, E in geom:
         new_geom.append((w, h, yn - offs, yn - offs - h, E))
     EI = sum(E * w * (top**3 - bot**3) / 3 for w, h, top, bot, E in new_geom)
