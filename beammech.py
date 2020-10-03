@@ -12,7 +12,7 @@ from types import SimpleNamespace
 import math
 import numpy as np
 
-__version__ = '1.0'
+__version__ = "2020.07.28"
 
 
 def solve(length, supports, loads, EI, GA, top, bottom, shear):  # {{{
