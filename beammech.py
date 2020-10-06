@@ -2,7 +2,7 @@
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2020 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
 # SPDX-License-Identifier: MIT
-# Last modified: 2020-07-28T01:13:45+0200
+# Last modified: 2020-10-06T20:33:26+0200
 #
 """Module for stiffness and strength calculations of beams."""
 
@@ -12,7 +12,7 @@ from types import SimpleNamespace
 import math
 import numpy as np
 
-__version__ = "2020.07.28"
+__version__ = "2020.10.06"
 
 
 def solve(length, supports, loads, EI, GA, top, bottom, shear):  # {{{
@@ -545,16 +545,20 @@ def _check_arrays(L, EI, GA, top, bottom):  # {{{
     Returns:
         The modified EI, GA, top and bottom arrays.
     """
+    rv = []
     for name, ar in zip(('EI', 'GA', 'top', 'bottom'), (EI, GA, top, bottom)):
         # Convert float to an ndarray.
-        if isinstance(ar, float):
+        if isinstance(ar, (int, float)):
             ar = np.ones(L+1) * ar
         # Convert list/tuple to ndarray.
-        elif isinstance(ar, np.ndarray):
+        elif isinstance(ar, (list, tuple)):
             ar = np.array(ar)
+        if not isinstance(ar, np.ndarray):
+            raise ValueError(f"{name} is not a int, float, list, tuple or numpy.ndarray")
         la = len(ar)
         if la != L + 1:
             raise ValueError(
                 f"Length of array {name} ({la}) doesn't match beam length ({L}) + 1 ."
             )
-    return EI, GA, top, bottom  # }}}
+        rv.append(ar)
+    return rv  # }}}
