@@ -3,11 +3,11 @@
 #
 # Author: R.F. Smith <rsmith@xs4all.nl>
 # Created: 2017-07-17 21:39:14 +0200
-# Last modified: 2017-07-17 21:51:57 +0200
+# Last modified: 2020-10-06T21:24:34+0200
 """Tests for beammech helper functions"""
 
 import numpy as np
-from beammech import interpolate, _force, _start_end
+from beammech import interpolate, _force, _start_end, _check_arrays
 
 
 def test_interpolate():
@@ -26,3 +26,15 @@ def test_force():
 def test_start_end():
     assert _start_end(pos=(100, 200)) == (100, 200)
     assert _start_end(start=75, end=320) == (75, 320)
+
+
+def test_check_arrays():
+    L = 100
+    EI = 1.6e11
+    GA = 250000
+    top = [12]*(L+1)
+    bottom = [12]*50 + [14]*51
+    rv = _check_arrays(L, EI, GA, top, bottom)
+    for v in rv:
+        assert isinstance(v, np.ndarray)
+        assert len(v) == 101

@@ -2,7 +2,7 @@
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2020 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
 # SPDX-License-Identifier: MIT
-# Last modified: 2020-10-06T20:33:26+0200
+# Last modified: 2020-10-06T21:31:48+0200
 #
 """Module for stiffness and strength calculations of beams."""
 
@@ -547,18 +547,20 @@ def _check_arrays(L, EI, GA, top, bottom):  # {{{
     """
     rv = []
     for name, ar in zip(('EI', 'GA', 'top', 'bottom'), (EI, GA, top, bottom)):
-        # Convert float to an ndarray.
+        # Convert single number to an ndarray.
         if isinstance(ar, (int, float)):
             ar = np.ones(L+1) * ar
         # Convert list/tuple to ndarray.
         elif isinstance(ar, (list, tuple)):
             ar = np.array(ar)
-        if not isinstance(ar, np.ndarray):
+        elif isinstance(ar, np.ndarray):
+            pass
+        else:
             raise ValueError(f"{name} is not a int, float, list, tuple or numpy.ndarray")
         la = len(ar)
         if la != L + 1:
             raise ValueError(
-                f"Length of array {name} ({la}) doesn't match beam length ({L}) + 1 ."
+                f"Length of {name} ({la}) doesn't match beam length ({L}) + 1 ."
             )
         rv.append(ar)
     return rv  # }}}
