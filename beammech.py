@@ -61,7 +61,7 @@ def solve(length, supports, loads, EI, GA, top, bottom, shear):  # {{{
     loads = [ld for ld in loads]  # make a copy since we modifiy it!
     EI, GA, top, bot = _check_arrays(length, EI, GA, top, bottom)
     if shear not in (True, False):
-        raise ValueError('shear should be a boolean')
+        raise ValueError("shear should be a boolean")
     # Calculate support loads.
     moment = sum([ld.moment(s1) for ld in loads])
     if s2:
@@ -77,7 +77,10 @@ def solve(length, supports, loads, EI, GA, top, bottom, shear):  # {{{
     # Calculate bending moment
     M = np.cumsum(D)
     Mstep = np.sum(
-        np.array([ld.moment_array(length) for ld in loads if isinstance(ld, MomentLoad)]), axis=0
+        np.array(
+            [ld.moment_array(length) for ld in loads if isinstance(ld, MomentLoad)]
+        ),
+        axis=0,
     )
     M += Mstep
     if s2 is None:
@@ -95,7 +98,9 @@ def solve(length, supports, loads, EI, GA, top, bottom, shear):  # {{{
         # Then rotate around the anchor so that the deflection at the other
         # support is also 0.
         delta = -y[s2] / math.fabs(s1 - s2)
-        slope = np.concatenate((np.arange(-s1, 1, 1), np.arange(1, len(y) - s1))) * delta
+        slope = (
+            np.concatenate((np.arange(-s1, 1, 1), np.arange(1, len(y) - s1))) * delta
+        )
         dy += delta
         y = y + slope
     results = SimpleNamespace()
@@ -128,14 +133,19 @@ def save(results, path):  # {{{
     """
     data = np.vstack(
         (
-            np.arange(results.length + 1), results.D, results.M, results.y,
-            results.etop, results.ebot, results.dy
+            np.arange(results.length + 1),
+            results.D,
+            results.M,
+            results.y,
+            results.etop,
+            results.ebot,
+            results.dy,
         )
     ).T
     p = basename(path)
     d = str(datetime.now())[:-7]
-    h = f'file: {p}\ngenerated: {d}\nx D M y et eb dy'
-    np.savetxt(path, data, fmt='%g', header=h)  # }}}
+    h = f"file: {p}\ngenerated: {d}\nx D M y et eb dy"
+    np.savetxt(path, data, fmt="%g", header=h)  # }}}
 
 
 def EI(sections, normal=None):  # {{{
@@ -202,7 +212,7 @@ def EI(sections, normal=None):  # {{{
     # Convert the remaining geometry to reference yn.
     for w, h, offs, E in geom:
         new_geom.append((w, h, yn - offs, yn - offs - h, E))
-    EI = sum(E * w * (top**3 - bot**3) / 3 for w, h, top, bot, E in new_geom)
+    EI = sum(E * w * (top ** 3 - bot ** 3) / 3 for w, h, top, bot, E in new_geom)
     top = max(g[-3] for g in new_geom)
     bot = min(g[-2] for g in new_geom)
     return EI, top, bot  # }}}
@@ -262,10 +272,10 @@ def patientload(**kwargs):  # {{{
         A list of DistLoads.
     """
     f = _force(**kwargs)
-    if 'feet' in kwargs:
-        s = round(float(kwargs['feet']))
-    elif 'head' in kwargs:
-        s = round(float(kwargs['head'])) - 1900
+    if "feet" in kwargs:
+        s = round(float(kwargs["feet"]))
+    elif "head" in kwargs:
+        s = round(float(kwargs["head"])) - 1900
     else:
         raise ValueError("No 'feet' nor 'head' given.")
     fractions = [
@@ -274,7 +284,7 @@ def patientload(**kwargs):  # {{{
         (0.074 * f, (s + 1000, s + 1180)),  # hands
         (0.408 * f, (s + 1000, s + 1700)),  # torso
         (0.074 * f, (s + 1200, s + 1700)),  # arms
-        (0.074 * f, (s + 1220, s + 1900))
+        (0.074 * f, (s + 1220, s + 1900)),
     ]  # head
     return [DistLoad(force=i[0], pos=i[1]) for i in fractions]  # }}}
 
@@ -298,7 +308,7 @@ class Load(object):  # {{{
             'point load of -1471.5 N @ 100 mm.'
         """
         self.size = _force(**kwargs)
-        self.pos = round(float(kwargs['pos']))
+        self.pos = round(float(kwargs["pos"]))
 
     def __str__(self):
         return f"point load of {self.size} N @ {self.pos} mm."
@@ -320,12 +330,11 @@ class Load(object):  # {{{
             An array that contains the contribution of this load.
         """
         rv = np.zeros(length + 1)
-        rv[self.pos:] = self.size
+        rv[self.pos :] = self.size
         return rv  # }}}
 
 
 class MomentLoad(Load):  # {{{
-
     def __init__(self, moment, pos):
         """Create a local bending moment load.
 
@@ -337,7 +346,7 @@ class MomentLoad(Load):  # {{{
         Load.__init__(self, force=0, pos=pos)
 
     def __str__(self):
-        return f'moment of {self.m} Nmm @ {self.pos}'
+        return f"moment of {self.m} Nmm @ {self.pos}"
 
     def moment(self, pos):
         """
@@ -368,7 +377,7 @@ class MomentLoad(Load):  # {{{
             An array that contains the contribution of this load.
         """
         rv = np.zeros(length + 1)
-        rv[self.pos:] = -self.m
+        rv[self.pos :] = -self.m
         return rv  # }}}
 
 
@@ -397,7 +406,9 @@ class DistLoad(Load):  # {{{
         Load.__init__(self, force=size, pos=float(self.start + self.end) / 2)
 
     def __str__(self):
-        return f"constant distributed load of {self.size} N @ {self.start}--{self.end} mm."
+        return (
+            f"constant distributed load of {self.size} N @ {self.start}--{self.end} mm."
+        )
 
     def shear(self, length):
         rem = length + 1 - self.end
@@ -431,16 +442,17 @@ class TriangleLoad(DistLoad):  # {{{
 
     def __str__(self):
         if self.start < self.end:
-            d = 'ascending'
+            d = "ascending"
         else:
-            d = 'descending'
+            d = "descending"
         return f"linearly {d} distributed load of {self.size} N @ {self.start}--{self.end} mm."
 
     def shear(self, length):
         rem = length + 1 - self.end
         parts = (
-            np.zeros(self.start), np.linspace(0, self.q, self.end - self.start),
-            np.ones(rem) * self.q
+            np.zeros(self.start),
+            np.linspace(0, self.q, self.end - self.start),
+            np.ones(rem) * self.q,
         )
         dv = np.concatenate(parts)
         return np.cumsum(dv)  # }}}
@@ -460,10 +472,10 @@ def _force(**kwargs):  # {{{
         >>> _force(kg=1)
         -9.81
     """
-    if 'force' in kwargs:
-        force = float(kwargs['force'])
-    elif 'kg' in kwargs:
-        force = -9.81 * float(kwargs['kg'])
+    if "force" in kwargs:
+        force = float(kwargs["force"])
+    elif "kg" in kwargs:
+        force = -9.81 * float(kwargs["kg"])
     else:
         raise KeyError("No 'force' or 'kg' present")
     return force  # }}}
@@ -482,13 +494,13 @@ def _start_end(**kwargs):  # {{{
         >>> _start_end(start=100, end=200)
         (100, 200)
     """
-    if 'pos' in kwargs:
-        p = kwargs['pos']
+    if "pos" in kwargs:
+        p = kwargs["pos"]
         if not isinstance(p, tuple) and len(p) != 2:
             raise ValueError("'pos' should be a 2-tuple")
-        pos = (round(float(kwargs['pos'][0])), round(float(kwargs['pos'][1])))
-    elif 'start' in kwargs and 'end' in kwargs:
-        pos = (round(float(kwargs['start'])), round(float(kwargs['end'])))
+        pos = (round(float(kwargs["pos"][0])), round(float(kwargs["pos"][1])))
+    elif "start" in kwargs and "end" in kwargs:
+        pos = (round(float(kwargs["start"])), round(float(kwargs["end"])))
     else:
         raise KeyError("Neither 'pos' or 'start' and 'end' present")
     return pos  # }}}
@@ -503,18 +515,18 @@ def _check_length_supports(length, supports):  # {{{
     """
     length = int(round(length))
     if length < 1:
-        raise ValueError('length must be ≥1')
+        raise ValueError("length must be ≥1")
     if supports is not None:
         if len(supports) != 2:
-            t = 'The problem definition must contain exactly two supports.'
+            t = "The problem definition must contain exactly two supports."
             raise ValueError(t)
         s = (int(round(supports[0])), int(round(supports[1])))
         if s[0] == s[1]:
-            raise ValueError('Two identical supports found!')
+            raise ValueError("Two identical supports found!")
         elif s[0] > s[1]:
             s = (s[1], s[0])
         if s[0] < 0 or s[1] > length:
-            raise ValueError('Support(s) outside of the beam!')
+            raise ValueError("Support(s) outside of the beam!")
     else:
         s = (0, None)
     return (length, s[0], s[1])  # }}}
@@ -530,10 +542,10 @@ def _check_loads(loads):  # {{{
     if isinstance(loads, Load):
         loads = [loads]
     if loads is None or len(loads) == 0:
-        raise ValueError('No loads specified')
+        raise ValueError("No loads specified")
     for ld in loads:
         if not isinstance(ld, Load):
-            raise ValueError('Loads must be Load instances')
+            raise ValueError("Loads must be Load instances")
     return list(loads)  # }}}
 
 
@@ -546,17 +558,19 @@ def _check_arrays(L, EI, GA, top, bottom):  # {{{
         The modified EI, GA, top and bottom arrays.
     """
     rv = []
-    for name, ar in zip(('EI', 'GA', 'top', 'bottom'), (EI, GA, top, bottom)):
+    for name, ar in zip(("EI", "GA", "top", "bottom"), (EI, GA, top, bottom)):
         # Convert single number to an ndarray.
         if isinstance(ar, (int, float)):
-            ar = np.ones(L+1) * ar
+            ar = np.ones(L + 1) * ar
         # Convert list/tuple to ndarray.
         elif isinstance(ar, (list, tuple)):
             ar = np.array(ar)
         elif isinstance(ar, np.ndarray):
             pass
         else:
-            raise ValueError(f"{name} is not a int, float, list, tuple or numpy.ndarray")
+            raise ValueError(
+                f"{name} is not a int, float, list, tuple or numpy.ndarray"
+            )
         la = len(ar)
         if la != L + 1:
             raise ValueError(

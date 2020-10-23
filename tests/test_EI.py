@@ -14,9 +14,9 @@ def test_simple():
     B = 100
     H = 20
     E = 210000
-    sections = ((B, H, 0, E), )
+    sections = ((B, H, 0, E),)
     EI, top, bot = bm.EI(sections, E)
-    EIc = E * B * (H**3) / 12
+    EIc = E * B * (H ** 3) / 12
     assert 0.99 < EI / EIc < 1.01
     assert top == H / 2
     assert bot == -H / 2
@@ -27,8 +27,8 @@ def test_offsets():
     B = 100
     H = 20
     E = 210000
-    sections = ((B, H, 0, E), )
-    sections2 = ((B, H, 12.435, E), )
+    sections = ((B, H, 0, E),)
+    sections2 = ((B, H, 12.435, E),)
     EI, top, bot = bm.EI(sections, E)
     EI2, top2, bot2 = bm.EI(sections2, E)
     assert 0.99 < EI / EI2 < 1.01
@@ -45,7 +45,7 @@ def test_simple_sw():
     E = 20000
     sections = ((B, t, 0, E), (B, t, h + t, E))
     EI, top, bot = bm.EI(sections, E)
-    EIc = E * B * (H**3 - h**3) / 12
+    EIc = E * B * (H ** 3 - h ** 3) / 12
     assert 0.99 < EI / EIc < 1.01
     assert top == H / 2
     assert bot == -H / 2
@@ -73,5 +73,5 @@ def test_sw2():
     E2 = 10000
     sections = ((B1, t, 0, E1), (B2, t, h + t, E2))
     EI, top, bot = bm.EI(sections, E1)
-    EIc = E1 * B1 * (H**3 - h**3) / 12
+    EIc = E1 * B1 * (H ** 3 - h ** 3) / 12
     assert 0.99 < EI / EIc < 1.01

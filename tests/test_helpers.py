@@ -11,11 +11,15 @@ from beammech import interpolate, _force, _start_end, _check_arrays
 
 
 def test_interpolate():
-    assert np.all(interpolate([(0, 0), (3, 3)]) == np.array([0., 1., 2., 3.]))
+    assert np.all(interpolate([(0, 0), (3, 3)]) == np.array([0.0, 1.0, 2.0, 3.0]))
     assert np.all(
-        interpolate([(0, 0), (4, 3), (6, -1)]) == np.array([0., 0.75, 1.5, 2.25, 3., 1., -1.])
+        interpolate([(0, 0), (4, 3), (6, -1)])
+        == np.array([0.0, 0.75, 1.5, 2.25, 3.0, 1.0, -1.0])
     )
-    assert np.all(interpolate([(1, 1), (4, 4), (6, -3)]) == np.array([1., 2., 3., 4., 0.5, -3.]))
+    assert np.all(
+        interpolate([(1, 1), (4, 4), (6, -3)])
+        == np.array([1.0, 2.0, 3.0, 4.0, 0.5, -3.0])
+    )
 
 
 def test_force():
@@ -32,8 +36,8 @@ def test_check_arrays():
     L = 100
     EI = 1.6e11
     GA = 250000
-    top = [12]*(L+1)
-    bottom = [12]*50 + [14]*51
+    top = [12] * (L + 1)
+    bottom = [12] * 50 + [14] * 51
     rv = _check_arrays(L, EI, GA, top, bottom)
     for v in rv:
         assert isinstance(v, np.ndarray)
