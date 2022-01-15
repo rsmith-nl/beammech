@@ -32,9 +32,9 @@ summation (integration) is 1 mm, because that is a good match for the kind of
 problems I use it for.  And it makes the math simpler; A whole lot of
 divisions just disappear.
 
-Before we can solve the problem we need to define it.  This is done with a
-standard Python dictionary.  The length of the beam and the location of the
-supports are the initial parameters.
+Before we can solve the problem we need to define it.
+The length of the beam and the location of the supports are the initial
+parameters.
 
 .. code-block:: python
 
@@ -44,13 +44,14 @@ supports are the initial parameters.
     length = 2287
     supports = (6, 780)
 
-The length and the locations of the supports will be rounded to the nearest
-integer.  The beam will stretch from x = 0 to x = length.  There must be
-exactly two supports.  If necessary these will be placed into ascending order.
-The beam is assumed to be simply supported at the two support points.  This
-means that vertical movement of those points is prescribed as 0, but rotation
-of the beam around those points is not restricted.  If the value of supports
-is None, the beam is assumed to be clamped at x=0.
+The length and the locations of the supports will be rounded to the
+nearest integer.  The beam will stretch from x = 0 to x = length.  The value
+of ``supports`` must be a 2-tuple of integers or ``None``.  If necessary the
+supports will be placed into ascending order.  The beam is assumed to be simply
+supported at the two support points.  This means that vertical movement of
+those points is prescribed as 0, but rotation of the beam around those points
+is not restricted.  If the value of supports is ``None``, the beam is assumed to
+be clamped at x=0.
 
 We need to define some loads on the beam.  Several types of load are defined,
 all of them acting in the y-direction.
