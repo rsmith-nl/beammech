@@ -4,14 +4,13 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "beammech"
-version = "2020.10"
 authors = [
   { name="Roland Smith", email="rsmith@xs4all.nl" },
 ]
-description = "Module to evaluate loaded beams."
 readme = "README.rst"
 license = {file = "LICENSE.txt"}
 requires-python = ">=3.8"
+dynamic = ["version", "description"]
 dependencies = [
     "numpy"
 ]
