@@ -20,12 +20,41 @@ be multiple loads present and where shear deflection cannot be ignored.
 Therefore I began to calculate my own solutions.  These programs all followed
 the same pattern.  The solution is determined by discretization and
 integration.  So I decided to separate the re-usable parts and put them in a
-module.  That was the birth of beammech.py.
+module.  That was the birth of ``beammech``.
 
-Using beammech.py
-=================
 
-Currently, this module is being developed and tested in Python 3.6+ only.
+Installation
+============
+
+This module requires ``numpy``. The installation uses ``flit_core``.
+
+On some systems, python 3 is installed as ``python3``. On others, it's
+installed as just ``python``. Adapt the following commands accordingly.
+
+First, create a wheel::
+
+    > python3 -m build -n -w
+
+Installing it for the local user is the preferred method, since this doesn't
+require root/administrator privileges.
+To install it for the local user::
+
+    > python3 -m pip install --user dist/*.whl
+
+To install it system-wide (requires root privileges)::
+
+    # python3 -m pip install dist/*.whl
+
+To remove the installation (require root privileges in case of a system-wide
+installation)::
+
+    python3 -m pip uninstall beammech
+
+
+Using beammech
+==============
+
+Currently, this module is being known to work with python >=3.9.
 
 This software uses *metric units* throughout.  Mass is in kg, forces are in N,
 and lengths in mm.  The accelleration of gravity is set at 9.81 m/s².  A

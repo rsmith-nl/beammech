@@ -9,7 +9,7 @@ authors = [
 ]
 readme = "README.rst"
 license = {file = "LICENSE.txt"}
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dynamic = ["version", "description"]
 dependencies = [
     "numpy"
