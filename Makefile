@@ -55,4 +55,4 @@ format::
 	${FMT} ${MOD}.py tests/*.py
 
 test::
-	${TEST} tests
+	env PYTHONPATH=src/ ${PY} -m pytest
