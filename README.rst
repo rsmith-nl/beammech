@@ -26,7 +26,8 @@ module.  That was the birth of ``beammech``.
 Installation
 ============
 
-This module requires ``numpy``. The installation uses ``flit_core``.
+This module requires ``numpy``.
+The installation uses ``build`` and ``flit_core``.
 
 On some systems, python 3 is installed as ``python3``. On others, it's
 installed as just ``python``. Adapt the following commands accordingly.
