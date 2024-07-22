@@ -20,8 +20,6 @@ TEST:= pytest -v
 all::
 	@echo 'you can use the following commands:'
 	@echo '* test: run the built-in tests.'
-	@echo '* install: install system-wide.'
-	@echo '* uninstall: remove system install.'
 	@echo '* install-user: install for current user.'
 	@echo '* uninstall-user: remove install for current user.'
 	@echo '* dist: create a distribution file.'
@@ -30,34 +28,16 @@ all::
 	@echo '* tags: run exctags.'
 	@echo '* format: format the source with yapf.'
 
-install::
-	@if [ `id -u` != 0 ]; then \
-		echo "You must be root to install the software!"; \
-		exit 1; \
-	fi
-# Let Python do the install work.
-	${PY} -B setup.py install
-	rm -rf build dist *.egg-info
-
-
 install-user::
-	${PY} -B setup.py install --user
+	${PY} pip install --user dist/beammech*
 	rm -rf build dist *.egg-info
-
-uninstall::
-	@if [ `id -u` != 0 ]; then \
-		echo "You must be root to uninstall the software!"; \
-		exit 1; \
-	fi
-	rm -f ${PKGPATH}/${MOD}.py ${PKGPATH}/${MOD}.egg* ${PKGPATH}/${MOD}*.egg-info
 
 uninstall-user::
 	rm -f ${USRPATH}/${MOD}.py ${USRPATH}/${MOD}.egg* ${USRPATH}/${MOD}*.egg-info
 
-# Create distribution file. Use zip format to make deployment easier on windoze.
+# Create distribution file. Use wheel format.
 dist:
-	${PY} -B setup.py sdist --format=zip
-	rm -f MANIFEST
+	${PY} -m build -n -w
 
 clean::
 	rm -rf dist build backup-*.tar.gz MANIFEST *.egg-info

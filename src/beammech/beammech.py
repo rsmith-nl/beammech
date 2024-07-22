@@ -2,7 +2,7 @@
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2020 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
 # SPDX-License-Identifier: MIT
-# Last modified: 2020-10-06T21:31:48+0200
+# Last modified: 2024-07-22T17:33:06+0200
 #
 """Module for stiffness and strength calculations of beams."""
 
@@ -12,7 +12,7 @@ from types import SimpleNamespace
 import math
 import numpy as np
 
-__version__ = "2020.10.06"
+__version__ = "2020.10"
 
 
 def solve(length, supports, loads, EI, GA, top, bottom, shear):  # {{{

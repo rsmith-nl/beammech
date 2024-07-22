@@ -1,0 +1,26 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "beammech"
+version = "2020.10"
+authors = [
+  { name="Roland Smith", email="rsmith@xs4all.nl" },
+]
+description = "Module to evaluate loaded beams."
+readme = "README.rst"
+license = {file = "LICENSE.txt"}
+requires-python = ">=3.8"
+dependencies = [
+    "numpy"
+]
+classifiers = [
+   'Development Status :: 5 - Production/Stable', 'Environment :: Console',
+   'Intended Audience :: End Users/Desktop', 'Intended Audience :: Manufacturing',
+   'License :: OSI Approved :: BSD License', 'Operating System :: OS Independent',
+   'Programming Language :: Python :: 3', 'Topic :: Scientific/Engineering'
+]
+
+[project.urls]
+Repository = "https://github.com/rsmith-nl/beammech"

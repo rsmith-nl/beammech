@@ -1,6 +1,0 @@
-include Makefile
-include tests/__init__.py
-include tests/test_EI.py
-include tests/test_helpers.py
-include tests/test_loads.py
-include README.rst
