@@ -2,7 +2,7 @@
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2020 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
 # SPDX-License-Identifier: MIT
-# Last modified: 2024-07-22T17:33:06+0200
+# Last modified: 2024-07-22T18:36:54+0200
 #
 """Module for stiffness and strength calculations of beams."""
 
@@ -212,7 +212,7 @@ def EI(sections, normal=None):  # {{{
     # Convert the remaining geometry to reference yn.
     for w, h, offs, E in geom:
         new_geom.append((w, h, yn - offs, yn - offs - h, E))
-    EI = sum(E * w * (top ** 3 - bot ** 3) / 3 for w, h, top, bot, E in new_geom)
+    EI = sum(E * w * (top**3 - bot**3) / 3 for w, h, top, bot, E in new_geom)
     top = max(g[-3] for g in new_geom)
     bot = min(g[-2] for g in new_geom)
     return EI, top, bot  # }}}

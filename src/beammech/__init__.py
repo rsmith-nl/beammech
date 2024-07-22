@@ -141,5 +141,5 @@ results are returned in a dictionary.  The following keys exist;
     the reaction moment at that point
 """
 
-from .beammech import solve, save, EI, interpolate, patientload, __version__
-from .beammech import Load, MomentLoad, DistLoad, TriangleLoad
+from .beammech import solve, save, EI, interpolate, patientload, __version__  # noqa
+from .beammech import Load, MomentLoad, DistLoad, TriangleLoad  # noqa

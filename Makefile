@@ -1,6 +1,6 @@
 
 # vim:fileencoding=utf-8:fdm=marker:ft=make
-.PHONY: all install uninstall clean check tags format test
+.PHONY: all install-user wheel clean check tags format test
 .SUFFIXES:
 
 MOD:= beammech
@@ -11,7 +11,7 @@ PY:= python3
 PKGPATH!=${PY} -c "import site; print(site.getsitepackages()[0])"
 USRPATH!=${PY} -c "import site; print(site.getusersitepackages())"
 # Program settings
-CHECK:= env PYTHONWARNINGS=ignore::FutureWarning pylama -i E501,W605
+CHECK:= env PYTHONWARNINGS=ignore::FutureWarning pylama -i E501,W605,E203
 TAGS:= uctags -R -V
 FMT:= yapf -i
 TEST:= pytest -v
@@ -29,14 +29,14 @@ all::
 	@echo '* format: format the source with yapf.'
 
 install-user::
-	${PY} pip install --user dist/beammech*
+	${PY} -m pip install --user dist/beammech-2020.10-py3-none-any.whl
 	rm -rf build dist *.egg-info
 
 uninstall-user::
 	rm -f ${USRPATH}/${MOD}.py ${USRPATH}/${MOD}.egg* ${USRPATH}/${MOD}*.egg-info
 
 # Create distribution file. Use wheel format.
-dist:
+wheel::
 	${PY} -m build -n -w
 
 clean::
@@ -46,7 +46,7 @@ clean::
 
 # The targets below are mostly for the maintainer.
 check:: .IGNORE
-	${CHECK} ${MOD}.py tests/*.py
+	${CHECK} src/${MOD} tests/*.py
 
 tags::
 	${TAGS}
