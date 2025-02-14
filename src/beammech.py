@@ -2,7 +2,7 @@
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2020 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
 # SPDX-License-Identifier: MIT
-# Last modified: 2025-02-14T13:47:55+0100
+# Last modified: 2025-02-14T13:53:48+0100
 #
 """
 Beammech is a package for solving the differential equations for pure bending
@@ -153,7 +153,7 @@ from types import SimpleNamespace
 import math
 import numpy as np
 
-__version__ = "2020.10"
+__version__ = "2025.02"
 
 
 def solve(length, supports, loads, EI, GA, top, bottom, shear):  # {{{
