@@ -2,7 +2,7 @@
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2020 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
 # SPDX-License-Identifier: MIT
-# Last modified: 2025-02-14T13:53:48+0100
+# Last modified: 2025-02-14T15:42:20+0100
 #
 """
 Beammech is a package for solving the differential equations for pure bending
@@ -116,7 +116,7 @@ solve it.
 This will raise a KeyError if values are missing from the problem definition,
 or a ValueError if incorrect values are used.  On successful completion, the
 results are returned in a types.SimpleNamespace.
-This has the following members
+This has the following members:
 
 D
     A numpy array containing the shear force in the cross-section at each mm
