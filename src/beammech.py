@@ -2,7 +2,7 @@
 # vim:fileencoding=utf-8:ft=python:fdm=marker
 # Copyright © 2012-2020 R.F. Smith <rsmith@xs4all.nl>. All rights reserved.
 # SPDX-License-Identifier: MIT
-# Last modified: 2024-07-22T20:02:09+0200
+# Last modified: 2025-02-14T13:47:55+0100
 #
 """
 Beammech is a package for solving the differential equations for pure bending
@@ -19,7 +19,6 @@ parameters.
 
     import beammech as bm
 
-    beam = {}
     length = 2287
     supports = (6, 780)
 
@@ -56,9 +55,9 @@ used in the -y direction (-9.81 m/s²).
 
 .. code-block:: python
 
-    L1 = bm.PointLoad(force=-2000, pos=1000)
+    L1 = bm.Load(force=-2000, pos=1000)
     L2 = bm.DistLoad(kg=50, start=1500, end=2000)
-    L3 = bm.TriangeLoad(force=-200, start=1500, end=1200)
+    L3 = bm.TriangleLoad(force=-200, start=1500, end=1200)
 
 These is a function called “patientload” which creates a list of DistLoad
 objects forming the standard weight distribution of a human body according to
@@ -112,36 +111,37 @@ solve it.
 
 .. code-block:: python
 
-    results = bm.solve(length, supports, EI, GA, top, bottom, True)
+    results = bm.solve(length, supports, loads, EI, GA, top, bot, True)
 
 This will raise a KeyError if values are missing from the problem definition,
 or a ValueError if incorrect values are used.  On successful completion, the
-results are returned in a dictionary.  The following keys exist;
+results are returned in a types.SimpleNamespace.
+This has the following members
 
-'D'
+D
     A numpy array containing the shear force in the cross-section at each mm
     of the beam.
 
-'M'
+M
     A numpy array containing the bending moment in the cross-section at each mm
     of the beam.
 
-'y'
+y
     A numpy array containing the vertical displacement at each mm of the beam.
 
-'a'
+a
     A numpy array containing angle between the tangent line of the beam and the
     x-axis in radians at each mm of the beam.
 
-'etop'
+etop
     A numpy array containing the strain at the top of the cross-section at
     each mm of the beam.
 
-'ebot'
+ebot
     A numpy array containing the strain at the bottom of the cross-section at
     each mm of the beam.
 
-'R'
+R
     If 'supports' was provided, R is a 2-tuple of the reaction forces at said
     supports. Else R[0] is the reaction force at the clamped x=0 and R[1] is
     the reaction moment at that point
